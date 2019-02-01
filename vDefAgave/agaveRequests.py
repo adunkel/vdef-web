@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from datetime import timedelta 
 from django.utils import timezone
 
-BASEURL = 'https://public.agaveapi.co/'
+BASEURL = 'https://api.tacc.utexas.edu/'
 
 def agaveRequestAppDetails(token,appid):
 	headers = {
@@ -86,7 +86,7 @@ def agaveRequestRefreshToken(user):
 		'scope': 'PRODUCTION'
 	}
 
-	response = requests.post(BASEURL + '/token', 
+	response = requests.post(BASEURL + 'token', 
 								headers=headers, data=data, 
 								verify=False, 
 								auth=(clientKey, clientSecret))
