@@ -1,0 +1,15 @@
+{% extends "vDefAgave/base.html" %}
+{% block content %}
+	{% for app in result %}
+	<article class="media content-section">
+		<div class="media-body">
+			<div class="article-metadata">
+				<small class="mr-2">{{ app.id }}</small>
+				<small class="text-muted">{{ app.lastModified }}</small>
+			</div>
+			<h3><a class="article-title" href="{% url 'vDefAgave-jobsubmit' app.id %}">{{ app.label }}</a></h3>
+			<p class="article-content">{{ app.shortDescription }}</p>
+		</div>
+	</article>
+	{% endfor %}
+{% endblock content %}

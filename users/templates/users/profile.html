@@ -1,0 +1,14 @@
+{% extends "vDefAgave/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+	<div class="content-section">
+		<h1>{{ user.username }}</h1>
+		<p class="text-secondary"> Client Key: {{ user.profile.clientkey }}</p>
+		<p class="text-secondary"> Client Secret: {{ user.profile.clientsecret }}</p>
+		<p class="text-secondary"> Access Token: {{ user.profile.accesstoken }}</p>
+		<p class="text-secondary"> Refresh Token: {{ user.profile.refreshtoken }}</p>
+		<p class="text-secondary"> Expires In: {{ user.profile.expiresin }}</p>
+		<p class="text-secondary"> Time Created: {{ user.profile.timecreated }}</p>
+		<p class="text-secondary"> Expires At: {{ user.profile.expiresat }}</p>
+	</div>
+{% endblock content %}

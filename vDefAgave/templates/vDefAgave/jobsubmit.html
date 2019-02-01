@@ -1,0 +1,31 @@
+{% extends "vDefAgave/base.html" %}
+{% block content %}
+	<article class="media content-section">
+		<div class="media-body">
+			<div class="article-metadata">
+				<small class="mr-2">{{ result.id }}</small>
+				<small class="text-muted">{{ result.lastModified }}</small>
+			</div>
+			<h3 class="article-title">{{ result.label }}</h3>
+			{% if result.longDescription %}
+				<p class="article-content">{{ result.longDescription }}</p>
+			{% else %}
+				<p class="article-content">{{ result.shortDescription }}</p>
+			{% endif %}
+			<p> Parameters: <br>
+				{% for parameter in result.parameters %}
+					&nbsp&nbsp&nbsp&nbsp {{ parameter.id }} <br>
+				{% empty %}
+					&nbsp&nbsp&nbsp&nbsp No parameters
+				{% endfor %}
+			</p> 
+			<p> Inputs: <br>
+				{% for input in result.inputs %}
+					&nbsp&nbsp&nbsp&nbsp {{ input.id }}
+				{% empty %}
+					&nbsp&nbsp&nbsp&nbsp No inputs
+				{% endfor %}
+			</p>
+		</div>
+	</article>
+{% endblock content %}
