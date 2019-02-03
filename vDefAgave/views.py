@@ -7,6 +7,8 @@ from django import forms
 import json
 import os
 from django.contrib import messages
+import numpy as np
+import itertools
 
 def home(request):
 	return render(request, 'vDefAgave/home.html')
@@ -33,75 +35,109 @@ def jobsubmit(request,appId):
 	availableSystems = response['result']
 
 	if request.method == 'POST':
-		form = JobSubmitForm(request.POST, parameters=parameters,availableSystems=availableSystems)
+		print('POST')
+		form = JobSubmitForm(request.POST, parameters=parameters, availableSystems=availableSystems)
 		if form.is_valid():
 			# Extract form data
-			name = form.cleaned_data.get("name")
-			email = form.cleaned_data.get("email")
-			executionSystem = form.cleaned_data.get("executionSystem")
-			archiveSystem = form.cleaned_data.get("storageSystem")
+			name = form.cleaned_data.get('name')
+			email = form.cleaned_data.get('email')
+			executionSystem = form.cleaned_data.get('executionSystem')
+			archiveSystem = form.cleaned_data.get('storageSystem')
 			parameters = {}
+			sweepParameters = {}
 			for key, value in form.cleaned_data.items():
 				if key.startswith('para'):
 					key = key[5:]
 					parameters[key] = value
+				elif key.startswith('sweepPara') and key.endswith('start'):
+					key = key[10:]
+					key = key[0:-6]
+					sweepParameters[key] = 0 #Just a placeholder
+			parameters.update(sweepParameters)
+			print(parameters)
 
 			# Set other job values
 			appId = appId
-			batchQueue = "CLUSTER"
-			maxRunTime = "00:10:00"
+			batchQueue = 'CLUSTER'
+			maxRunTime = '00:10:00'
 			nodeCount = 1
 			processorsPerNode = 1
 			inputs = {}
 			archive = True
 			notification1 = {
-				"url":email,
-				"event":"FINISHED",
-				"persistent":"true"
+				'url':email,
+				'event':'FINISHED',
+				'persistent':'true'
 			}
 			notification2 = {
-				"url":email,
-				"event":"FAILED",
-				"persistent":"true"
+				'url':email,
+				'event':'FAILED',
+				'persistent':'true'
 			}
 			notifications = [notification1, notification2]
 
 			# Put everything into a dictionary
 			job = {
-				"name":name,
-				"appId": appId,
-				"executionSystem": executionSystem,
-				"batchQueue": batchQueue,
-				"maxRunTime": maxRunTime,
-				"nodeCount": nodeCount,
-				"processorsPerNode": processorsPerNode,
-				"inputs": inputs,
-				"parameters": parameters,
-				"archive": archive,
-				"archiveSystem": archiveSystem,
-				"notifications": notifications
+				'name':name,
+				'appId': appId,
+				'executionSystem': executionSystem,
+				'batchQueue': batchQueue,
+				'maxRunTime': maxRunTime,
+				'nodeCount': nodeCount,
+				'processorsPerNode': processorsPerNode,
+				'inputs': inputs,
+				'parameters': parameters,
+				'archive': archive,
+				'archiveSystem': archiveSystem,
+				'notifications': notifications
 			}
 
-			# Create job file to submit
+			# Prepare parameter space
+			space = []
+			keys = []
+			for key, value in sweepParameters.items():
+				print(key,value)
+				start = form.cleaned_data.get('sweepPara_%s_start' % key)
+				end = form.cleaned_data.get('sweepPara_%s_end' % key)
+				num = form.cleaned_data.get('sweepPara_%s_num' % key)
+				space.append([int(x) for x in np.linspace(start=start, stop=end, num=num)])
+				keys.append(key)
+
+			# Iterate through all parameter combination and submit a job for each
 			fileName = 'job.txt'
-			with open(fileName, 'w') as outfile:  
-				json.dump(job, outfile, indent=4)
+			jobids = []
+			failedJobs = []
+			for paraCombination in list(itertools.product(*space)):
+				print(paraCombination)
+				for i in range(len(keys)):
+					# Create job file to submit
+					job['parameters']['%s' % keys[i]] = paraCombination[i]
+					with open(fileName, 'w') as outfile:  
+						json.dump(job, outfile, indent=4)
 
-			# Submit the job
-			response = agaveRequestSubmitJob(user.profile.accesstoken)
+				# Submit the job
+				response = agaveRequestSubmitJob(user.profile.accesstoken)
+				print('RESPONSE:')
+				print(response)
 
-			if response['status'] == 'success':
-				messages.success(request, 'The job was submitted successfully.')
-			else:
-				messages.error(request, response['message'])
+				if response['status'] == 'success':
+					jobids.append(response['result']['id'])
+				else:
+					failedJobs.append(response['message'])
+
+			if len(jobids) > 0:
+				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobids),jobids))
+			if len(failedJobs) > 0:
+				messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
 
 			if os.path.exists(fileName):
 				os.remove(fileName)
 	else:
+		print('GET')
 		form = JobSubmitForm(parameters=parameters,availableSystems=availableSystems)
 
 	context = {
-	"form": form,
-	"appId": appId
+	'form': form,
+	'appId': appId
 	}
 	return render(request, 'vDefAgave/jobsubmit.html', context, {'title': appId})

@@ -3,8 +3,8 @@ from django.contrib.auth.models import User
 from datetime import timedelta 
 from django.utils import timezone
 
-BASEURL = 'https://public.agaveapi.co/'
-# BASEURL = 'https://api.tacc.utexas.edu/'
+# BASEURL = 'https://public.agaveapi.co/'
+BASEURL = 'https://api.tacc.utexas.edu/'
 
 def agaveRequestSystemsList(token):
 	"""List available systems.
