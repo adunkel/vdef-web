@@ -1,7 +1,7 @@
 from django.shortcuts import render
 import requests
 from django.http import HttpResponse
-from .agaveRequests import agaveRequestAppsList, agaveRequestAppDetails,agaveRequestSubmitJob,agaveRequestSystemsList
+from .agaveRequests import agaveRequestSystemsList,agaveRequestAppsList,agaveRequestAppDetails,agaveRequestSubmitJob,agaveRequestSystemsList
 from .forms import JobSubmitForm
 from django import forms
 import json
@@ -28,12 +28,18 @@ def jobsubmit(request,appId):
 	response = agaveRequestAppDetails(user.profile.accesstoken,appId)
 	parameters = response['result']['parameters']
 
+	# Get system option
+	response = agaveRequestSystemsList(user.profile.accesstoken)
+	availableSystems = response['result']
+
 	if request.method == 'POST':
-		form = JobSubmitForm(request.POST, parameters=parameters)
+		form = JobSubmitForm(request.POST, parameters=parameters,availableSystems=availableSystems)
 		if form.is_valid():
 			# Extract form data
 			name = form.cleaned_data.get("name")
 			email = form.cleaned_data.get("email")
+			executionSystem = form.cleaned_data.get("executionSystem")
+			archiveSystem = form.cleaned_data.get("storageSystem")
 			parameters = {}
 			for key, value in form.cleaned_data.items():
 				if key.startswith('para'):
@@ -42,14 +48,12 @@ def jobsubmit(request,appId):
 
 			# Set other job values
 			appId = appId
-			executionSystem = "schur-execution-fdunke1"
 			batchQueue = "CLUSTER"
 			maxRunTime = "00:10:00"
 			nodeCount = 1
 			processorsPerNode = 1
 			inputs = {}
 			archive = True
-			archiveSystem = "schur-storage-fdunke1"
 			notification1 = {
 				"url":email,
 				"event":"FINISHED",
@@ -94,7 +98,7 @@ def jobsubmit(request,appId):
 			if os.path.exists(fileName):
 				os.remove(fileName)
 	else:
-		form = JobSubmitForm(parameters=parameters)
+		form = JobSubmitForm(parameters=parameters,availableSystems=availableSystems)
 
 	context = {
 	"form": form,
