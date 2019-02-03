@@ -1,0 +1,16 @@
+{% extends "vDefAgave/base.html" %}
+{% block content %}
+	{% for system in result %}
+	<article class="media content-section">
+		<div class="media-body">
+			<div class="article-metadata">
+				<small class="mr-2">{{ system.id }}</small>
+				<small class="text-muted">{{ system.type }}</small>
+			</div>
+			<h3>{{ system.name }}</h3>
+			<p class="article-content">{{ system.description }}</p>
+			<p class="article-content">Status: {{ system.status }}</p>
+		</div>
+	</article>
+	{% endfor %}
+{% endblock content %}

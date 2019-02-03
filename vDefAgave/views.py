@@ -1,7 +1,7 @@
 from django.shortcuts import render
 import requests
 from django.http import HttpResponse
-from .agaveRequests import agaveRequestAppsList, agaveRequestAppDetails,agaveRequestSubmitJob
+from .agaveRequests import agaveRequestAppsList, agaveRequestAppDetails,agaveRequestSubmitJob,agaveRequestSystemsList
 from .forms import JobSubmitForm
 from django import forms
 import json
@@ -15,6 +15,11 @@ def apps(request):
 	user = request.user
 	response = agaveRequestAppsList(user.profile.accesstoken)
 	return render(request, 'vDefAgave/apps.html', response, {'title': 'Apps'})
+
+def systems(request):
+	user = request.user
+	response = agaveRequestSystemsList(user.profile.accesstoken)
+	return render(request, 'vDefAgave/systems.html', response, {'title': 'Systems'})
 
 def jobsubmit(request,appId):
 	user = request.user

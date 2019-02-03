@@ -6,6 +6,18 @@ from django.utils import timezone
 BASEURL = 'https://public.agaveapi.co/'
 # BASEURL = 'https://api.tacc.utexas.edu/'
 
+def agaveRequestSystemsList(token):
+	"""List available systems.
+	Agave equivalent: systems-list -V
+	"""
+	headers = {'Authorization': 'Bearer ' + token}
+	params = (('pretty', 'true'),)
+	response = requests.get(BASEURL + 'systems/v2/', 
+							headers=headers, 
+							params=params, 
+							verify=False)
+	return response.json()
+
 def agaveRequestSubmitJob(token):
 	"""Submit a new job.
 	Agave equivalent: jobs-submit -F 'job.txt'
@@ -18,7 +30,11 @@ def agaveRequestSubmitJob(token):
 		'fileToUpload': ('job.txt', open('job.txt', 'rb')),
 	}
 
-	response = requests.post(BASEURL + 'jobs/v2/', headers=headers, params=params, files=files, verify=False)
+	response = requests.post(BASEURL + 'jobs/v2/', 
+							 headers=headers, 
+							 params=params, 
+							 files=files, 
+							 verify=False)
 	return response.json()
 
 def agaveRequestAppDetails(token,appid):
