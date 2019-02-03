@@ -6,15 +6,27 @@ from django.utils import timezone
 BASEURL = 'https://public.agaveapi.co/'
 # BASEURL = 'https://api.tacc.utexas.edu/'
 
-def agaveRequestAppDetails(token,appid):
-	headers = {
-	    'Authorization': 'Bearer ' + token,
+def agaveRequestSubmitJob(token):
+	"""Submit a new job.
+	Agave equivalent: jobs-submit -F 'job.txt'
+	"""
+	headers = {'Authorization': 'Bearer ' + token}
+
+	params = (('pretty', 'true'),)
+
+	files = {
+		'fileToUpload': ('job.txt', open('job.txt', 'rb')),
 	}
 
-	params = (
-	    ('pretty', 'true'),
-	)
+	response = requests.post(BASEURL + 'jobs/v2/', headers=headers, params=params, files=files, verify=False)
+	return response.json()
 
+def agaveRequestAppDetails(token,appid):
+	"""Get the details of an application.
+	Agave equivalent: apps-list -V appid
+	"""
+	headers = {'Authorization': 'Bearer ' + token}
+	params = (('pretty', 'true'),)
 	response = requests.get(BASEURL + 'apps/v2/' + appid, 
 							headers=headers, 
 							params=params, 
@@ -22,14 +34,11 @@ def agaveRequestAppDetails(token,appid):
 	return response.json()
 
 def agaveRequestAppsList(token):
-	headers = {
-		'Authorization': 'Bearer ' + token,
-	}
-
-	params = (
-		('pretty', 'true'),
-	)
-
+	"""Lists all applications available to the user
+	Agave equivalent: apps-list
+	"""
+	headers = {'Authorization': 'Bearer ' + token}
+	params = (('pretty', 'true'),)
 	response = requests.get(BASEURL + 'apps/v2', 
 							headers=headers, 
 							params=params, 
@@ -37,17 +46,16 @@ def agaveRequestAppsList(token):
 	return response.json()
 
 def agaveRequestCreateClient(username, password, clientName='vDef'):
-	params = (
-	    ('pretty', 'true'),
-	)
-
+	"""Create a new client
+	Agave equivalent: clients-create -u username -p password -N clientName
+	"""
+	params = (('pretty', 'true'),)
 	data = {
 		'clientName': clientName,
 		'tier': 'Unlimited',
 		'description': '',
 		'callbackUrl': ''
 	}
-
 	response = requests.post(BASEURL + 'clients/v2/', 
 								params=params, 
 								data=data, 
@@ -56,6 +64,9 @@ def agaveRequestCreateClient(username, password, clientName='vDef'):
 	return response.json()
 
 def agaveRequestCreateToken(username, password, user):
+	"""Create a new token
+	Agave equivalent: auth-tokens-create -u username -p password
+	"""
 	data = {
 	  'username': username,
 	  'password': password,
@@ -73,14 +84,15 @@ def agaveRequestCreateToken(username, password, user):
 	return response.json()
 
 def agaveRequestRefreshToken(user):
+	"""Refresh the token
+	Saves new token to user profile
+	Agave equivalent: auth-tokens-refresh
+	"""
 	clientKey = user.profile.clientkey
 	clientSecret = user.profile.clientsecret
 	refreshToken = user.profile.refreshtoken
 
-	headers = {
-    	'Content-Type': 'application/x-www-form-urlencoded',
-	}
-
+	headers = {'Content-Type': 'application/x-www-form-urlencoded',}
 	data = {
 		'grant_type': 'refresh_token',
 		'refresh_token': refreshToken,
