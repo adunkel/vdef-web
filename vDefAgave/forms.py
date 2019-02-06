@@ -2,6 +2,16 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Fieldset, Field, Row, Column
 from crispy_forms.bootstrap import PrependedText
+
+class JobSearchForm(forms.Form):
+	jobName = forms.CharField(label='Job Name')
+
+	def __init__(self, *args, **kwargs):
+		super(JobSearchForm, self).__init__(*args, **kwargs)
+		self.helper = FormHelper(self)
+		self.helper.layout = Layout('jobName')
+		self.helper.layout.append(Submit('submit', 'Submit'))
+
 class JobSubmitForm(forms.Form):
 	name = forms.CharField(label='Job Name')
 	email = forms.EmailField(help_text='Email to receive notifications')

@@ -3,8 +3,34 @@ from django.contrib.auth.models import User
 from datetime import timedelta 
 from django.utils import timezone
 
-# BASEURL = 'https://public.agaveapi.co/'
-BASEURL = 'https://api.tacc.utexas.edu/'
+BASEURL = 'https://public.agaveapi.co/'
+# BASEURL = 'https://api.tacc.utexas.edu/'
+
+def agaveRequestJobSearch(token,jobName):
+	"""Searches for all jobs with the name jobName.
+	Agave equivalent: jbos-search 'name=jobName'
+	"""
+	headers = {'Authorization': 'Bearer ' + token}
+	params = (('name', jobName),)
+
+	response = requests.get(BASEURL + 'jobs/v2', 
+							 headers=headers, 
+							 params=params,  
+							 verify=False)
+	return response.json()
+
+def agaveRequestJobsOutputList(token,jobId):
+	"""List the output file of the given job.
+	Agave equivalent: jobs-output-list jobId
+	"""
+	headers = {'Authorization': 'Bearer ' + token}
+	params = (('pretty', 'true'),)
+
+	response = requests.get(BASEURL + 'jobs/v2/' + jobId + '/outputs/listings/', 
+							headers=headers, 
+							params=params, 
+							verify=False)
+	return response.json()
 
 def agaveRequestSystemsList(token):
 	"""List available systems.

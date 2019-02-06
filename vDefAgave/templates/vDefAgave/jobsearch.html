@@ -1,0 +1,21 @@
+{% extends "vDefAgave/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+	<form method="POST">
+		<fieldset class="form-group">
+			<legend class="border-bottom mb-4">Job Search</legend>
+			{% crispy form %}
+		</fieldset>
+	</form>
+
+	{% if response.result %}
+	<article class="media content-section">
+		<div class="media-body">
+			<h3>Results</h3>
+			{% for job in response.result %}
+			<p class="article-content"><a href="{% url 'vDefAgave-joboutput' job.id %}">{{ job.id }}</a></p>
+			{% endfor %}			
+		</div>
+	</article>
+	{% endif %}
+{% endblock content %}

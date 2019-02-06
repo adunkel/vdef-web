@@ -1,8 +1,8 @@
 from django.shortcuts import render
 import requests
 from django.http import HttpResponse
-from .agaveRequests import agaveRequestSystemsList,agaveRequestAppsList,agaveRequestAppDetails,agaveRequestSubmitJob,agaveRequestSystemsList
-from .forms import JobSubmitForm
+from .agaveRequests import *
+from .forms import JobSubmitForm, JobSearchForm
 from django import forms
 import json
 import os
@@ -23,6 +23,33 @@ def systems(request):
 	response = agaveRequestSystemsList(user.profile.accesstoken)
 	return render(request, 'vDefAgave/systems.html', response, {'title': 'Systems'})
 
+def joboutput(request,jobId):
+	user = request.user
+	response = agaveRequestJobsOutputList(user.profile.accesstoken,jobId)
+	context = {
+	'jobId': jobId,
+	'output': response['result']
+	}
+	return render(request, 'vDefAgave/joboutput.html', context, {'title': jobId})
+
+def jobsearch(request):
+	user = request.user
+	response = {}
+	if request.method == 'POST':
+		form = JobSearchForm(request.POST)
+		if form.is_valid():
+			jobName = form.cleaned_data.get('jobName')
+			response = agaveRequestJobSearch(user.profile.accesstoken,jobName)
+			if not response['result']:
+				messages.warning(request, 'No jobs with the name %s were found.' % jobName)
+	else:
+		form = JobSearchForm()
+	context = {
+	'form': form,
+	'response': response
+	}
+	return render(request, 'vDefAgave/jobsearch.html', context, {'title': 'Job Search'})
+
 def jobsubmit(request,appId):
 	user = request.user
 
@@ -35,7 +62,6 @@ def jobsubmit(request,appId):
 	availableSystems = response['result']
 
 	if request.method == 'POST':
-		print('POST')
 		form = JobSubmitForm(request.POST, parameters=parameters, availableSystems=availableSystems)
 		if form.is_valid():
 			# Extract form data
@@ -54,7 +80,6 @@ def jobsubmit(request,appId):
 					key = key[0:-6]
 					sweepParameters[key] = 0 #Just a placeholder
 			parameters.update(sweepParameters)
-			print(parameters)
 
 			# Set other job values
 			appId = appId
@@ -96,7 +121,6 @@ def jobsubmit(request,appId):
 			space = []
 			keys = []
 			for key, value in sweepParameters.items():
-				print(key,value)
 				start = form.cleaned_data.get('sweepPara_%s_start' % key)
 				end = form.cleaned_data.get('sweepPara_%s_end' % key)
 				num = form.cleaned_data.get('sweepPara_%s_num' % key)
@@ -108,7 +132,6 @@ def jobsubmit(request,appId):
 			jobids = []
 			failedJobs = []
 			for paraCombination in list(itertools.product(*space)):
-				print(paraCombination)
 				for i in range(len(keys)):
 					# Create job file to submit
 					job['parameters']['%s' % keys[i]] = paraCombination[i]
@@ -117,8 +140,6 @@ def jobsubmit(request,appId):
 
 				# Submit the job
 				response = agaveRequestSubmitJob(user.profile.accesstoken)
-				print('RESPONSE:')
-				print(response)
 
 				if response['status'] == 'success':
 					jobids.append(response['result']['id'])
@@ -133,7 +154,6 @@ def jobsubmit(request,appId):
 			if os.path.exists(fileName):
 				os.remove(fileName)
 	else:
-		print('GET')
 		form = JobSubmitForm(parameters=parameters,availableSystems=availableSystems)
 
 	context = {

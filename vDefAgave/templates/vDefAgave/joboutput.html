@@ -1,0 +1,15 @@
+{% extends "vDefAgave/base.html" %}
+{% block content %}
+	
+	<article class="media content-section">
+		<div class="media-body">
+			<div class="article-metadata">
+				<h3>Output files of job {{ jobId }}</h3>
+			</div>
+			{% for file in output %}
+			<p class="article-content">{{ file.name }}</p>
+			{% endfor %}
+		</div>
+	</article>
+	
+{% endblock content %}

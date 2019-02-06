@@ -5,5 +5,7 @@ urlpatterns = [
 	path('', views.home, name='vDefAgave-home'),
 	path('apps/', views.apps, name='vDefAgave-apps'),
 	path('systems/', views.systems, name='vDefAgave-systems'),
-	path('jobsubmit/<str:appId>/', views.jobsubmit, name='vDefAgave-jobsubmit')
+	path('jobsubmit/<str:appId>/', views.jobsubmit, name='vDefAgave-jobsubmit'),
+	path('joboutput/<str:jobId>/', views.joboutput, name='vDefAgave-joboutput'),
+	path('jobsearch/', views.jobsearch, name='vDefAgave-jobsearch'),
 ]
