@@ -1,6 +1,6 @@
 from django.shortcuts import render
 import requests
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .agaveRequests import *
 from .forms import JobSubmitForm, JobSearchForm
 from django import forms
@@ -9,9 +9,23 @@ import os
 from django.contrib import messages
 import numpy as np
 import itertools
+from django.contrib.auth.models import User
 
 def home(request):
 	return render(request, 'vDefAgave/home.html')
+
+def chart(request):
+	return render(request, 'vDefAgave/chart.html')
+
+def getData(request):
+	usersCount = User.objects.all().count()
+	labels = ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"]
+	defaultItems = [usersCount, 1,2,3,4,5]
+	data = {
+		'labels': labels,
+		'default': defaultItems,
+	}
+	return JsonResponse(data)
 
 def apps(request):
 	user = request.user
