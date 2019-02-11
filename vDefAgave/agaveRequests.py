@@ -3,8 +3,23 @@ from django.contrib.auth.models import User
 from datetime import timedelta 
 from django.utils import timezone
 
-BASEURL = 'https://public.agaveapi.co/'
-# BASEURL = 'https://api.tacc.utexas.edu/'
+# BASEURL = 'https://public.agaveapi.co/'
+BASEURL = 'https://api.tacc.utexas.edu/'
+
+def agaveRequestUploadFile(token,fileName,system,location):
+	"""Uploads a file to system with location
+	Agave equivalent: jobs-upload -F fileName -S system location
+	"""
+	headers = {'Authorization': 'Bearer ' + token}
+	params = (('pretty', 'true'),)
+	files = {'fileToUpload': (fileName, open(fileName, 'rb')),}
+
+	response = requests.post(BASEURL + 'files/v2/media/system/' + system + '/' + location, 
+							 headers=headers, 
+							 params=params, 
+							 files=files, 
+							 verify=False)
+	return response.json()
 
 def agaveRequestJobSearch(token,jobName):
 	"""Searches for all jobs with the name jobName.
@@ -49,9 +64,7 @@ def agaveRequestSubmitJob(token):
 	Agave equivalent: jobs-submit -F 'job.txt'
 	"""
 	headers = {'Authorization': 'Bearer ' + token}
-
 	params = (('pretty', 'true'),)
-
 	files = {
 		'fileToUpload': ('job.txt', open('job.txt', 'rb')),
 	}
@@ -61,6 +74,8 @@ def agaveRequestSubmitJob(token):
 							 params=params, 
 							 files=files, 
 							 verify=False)
+	print('==========RESPONSE==========')
+	print(response)
 	return response.json()
 
 def agaveRequestAppDetails(token,appid):

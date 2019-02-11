@@ -1,7 +1,7 @@
 {% extends "vDefAgave/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-	<form method="POST">
+	<form enctype="multipart/form-data" method="POST">
 		<fieldset class="form-group">
 			<legend class="border-bottom mb-4">Submit Job for {{ appId }}</legend>
 			{% crispy form %}
