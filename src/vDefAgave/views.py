@@ -32,7 +32,6 @@ def getData(request):
 def apps(request):
 	user = request.user
 	response = agaveRequestAppsList(user.profile.accesstoken)
-	print(response)
 	return render(request, 'vDefAgave/apps.html', response, {'title': 'Apps'})
 
 def systems(request):
@@ -249,7 +248,7 @@ def jobsubmit(request):
 					json.dump(job, outfile, indent=4)
 
 				# Submit the job
-				time.sleep(10) # Pause time
+				# time.sleep(10) # Pause time
 				response = agaveRequestSubmitJob(user.profile.accesstoken)
 
 
@@ -259,9 +258,9 @@ def jobsubmit(request):
 					failedJobs.append(response['message'])
 
 				# Pause time between jobs
-				for i in reversed(range(9)):
-					print('Time ' + str(i*10))
-					time.sleep(10)	
+				# for i in reversed(range(9)):
+				# 	print('Time ' + str(i*10))
+				# 	time.sleep(10)	
 
 			if len(jobids) > 0:
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobids),jobids))
