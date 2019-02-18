@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, reverse
+from django.contrib.auth.decorators import login_required
 import requests
 from django.http import HttpResponse, JsonResponse
 from .agaveRequests import *
@@ -16,38 +17,77 @@ import time
 def home(request):
 	return render(request, 'vDefAgave/home.html')
 
+@login_required
+def dataView(request):
+	index = request.GET.get('index','')
+	x = request.GET.get('x','')
+	y = request.GET.get('y','')
+	r = request.GET.get('r','')
+	context = {
+		'index': index,
+		'x': x,
+		'y': y,
+		'r': r,
+		'title': 'ViewData'
+	}
+	return render(request, 'vDefAgave/viewdata.html', context)
+
+@login_required
 def chart(request):
-	return render(request, 'vDefAgave/chart.html')
+	context = {
+		'title': 'Chart'
+	}
+	return render(request, 'vDefAgave/chart.html', context)
 
 def getData(request):
-	usersCount = User.objects.all().count()
-	labels = ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"]
-	defaultItems = [usersCount, 1,2,3,4,5]
+	labels = ["Red"]
+	defaultData = [{'x': 0.5,'y': 0.5,'r': 4},
+					{'x': 0.5,'y': 1.0,'r': 6},
+					{'x': 0.5,'y': 1.5,'r': 8},
+					{'x': 1.0,'y': 0.5,'r': 6},
+					{'x': 1.0,'y': 1.0,'r': 16},
+					{'x': 1.0,'y': 1.5,'r': 20},
+					{'x': 1.5,'y': 0.5,'r': 8},
+					{'x': 1.5,'y': 1.0,'r': 20},
+					{'x': 1.5,'y': 1.5,'r': 30}]
 	data = {
 		'labels': labels,
-		'default': defaultItems,
+		'default': defaultData,
 	}
 	return JsonResponse(data)
 
+@login_required
 def apps(request):
 	user = request.user
 	response = agaveRequestAppsList(user.profile.accesstoken)
-	return render(request, 'vDefAgave/apps.html', response, {'title': 'Apps'})
+	context = {
+		'response': response,
+		'title': 'Apps'
+	}
+	return render(request, 'vDefAgave/apps.html', context)
 
+@login_required
 def systems(request):
 	user = request.user
 	response = agaveRequestSystemsList(user.profile.accesstoken)
-	return render(request, 'vDefAgave/systems.html', response, {'title': 'Systems'})
+	context = {
+		'response': response,
+		'title': 'Systems'
+	}
+	return render(request, 'vDefAgave/systems.html', context)
 
+@login_required
 def joboutput(request,jobId):
 	user = request.user
 	response = agaveRequestJobsOutputList(user.profile.accesstoken,jobId)
 	context = {
-	'jobId': jobId,
-	'output': response['result']
+		'jobId': jobId,
+		'output': response['result'],
+		'title': 'Job Output'
 	}
-	return render(request, 'vDefAgave/joboutput.html', context, {'title': jobId})
+	return render(request, 'vDefAgave/joboutput.html', context)
 
+@login_required
 def jobsearch(request):
 	user = request.user
 	response = {}
@@ -62,10 +102,12 @@ def jobsearch(request):
 		form = JobSearchForm()
 	context = {
 	'form': form,
-	'response': response
+	'response': response,
+	'title': 'Job Search'
 	}
-	return render(request, 'vDefAgave/jobsearch.html', context, {'title': 'Job Search'})
+	return render(request, 'vDefAgave/jobsearch.html', context)
 
+@login_required
 def jobsetup(request):
 	appId = request.GET.get('appId','')
 	user = request.user
@@ -112,10 +154,12 @@ def jobsetup(request):
 
 	context = {
 	'form': form,
-	'appId': appId
+	'appId': appId,
+	'title': 'Submit Job'
 	}
-	return render(request, 'vDefAgave/jobsubmit.html', context, {'title': appId})
+	return render(request, 'vDefAgave/jobsubmit.html', context)
 
+@login_required
 def jobsubmit(request):
 	appId = request.GET.get('appId','')
 	geoFileTemplate = request.GET.get('geoFile','')
@@ -280,6 +324,7 @@ def jobsubmit(request):
 
 	context = {
 	'form': form,
-	'appId': appId
+	'appId': appId,
+	'title': 'Submit Job'
 	}
-	return render(request, 'vDefAgave/jobsubmit.html', context, {'title': appId})
+	return render(request, 'vDefAgave/jobsubmit.html', context)
