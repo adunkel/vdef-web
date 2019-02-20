@@ -4,13 +4,19 @@
 {% block jquery %}
 	var endpoint = '/api/data/'
 	var defaultData = []
-	var labels = []
+	var backgroundColor = []
+	var borderColor = []
+	var color1 = []
+	var color2 = []
 	$.ajax({
 		method: "GET",
 		url: endpoint,
 		success: function(data){
-			labels = data.labels
 			defaultData = data.default
+			backgroundColor = data.backgroundColor
+			borderColor = data.borderColor
+			color1 = data.color1
+			color2 = data.color2
 			setChart()
 		},
 		error: function(error_data){
@@ -21,21 +27,25 @@
 
 	function setChart(){
 		var ctx = document.getElementById("myChart").getContext('2d');
+		console.log(borderColor)
 		var myChart = new Chart(ctx, {
 			type: 'bubble',
 			data: {
 				datasets: [{
-					label: labels,
-					backgroundColor: "rgba(193,46,12,0.2)",
-					borderColor: "rgba(193,46,12,1)",
+					
+					backgroundColor: backgroundColor,
+					borderColor: borderColor,
 					data: defaultData
 				}]
 			},
 			options: {
 				title: {
 					display: true,
-					text: 'Energy'
-				}, 
+					text: 'Title'
+				},
+				legend:{
+					display: false
+				},
 				scales: {
 					yAxes: [{ 
 						scaleLabel: {
@@ -56,19 +66,59 @@
 						}
 					}]
 				},
+				tooltips: {
+					// Disable the on-canvas tooltip
+					enabled: false,
+
+					custom: function(tooltipModel) {
+						// Tooltip Element
+						var tooltipEl = document.getElementById('chartjs-tooltip');
+
+						// Hide if no tooltip
+						if (tooltipModel.opacity === 0) {
+							tooltipEl.innerHTML = '';
+							tooltipEl.style.opacity = 0;
+							return;
+						} else {
+							tooltipEl.style.opacity = 1;
+						}
+
+						// Set pitcture
+						var innerHtml = '<img src="https://www.math.lsu.edu//~bourdin//images/defectmechanics-effectivetoughness-1.png" style="max-height: 200px; width: auto;">';
+						tooltipEl.innerHTML = innerHtml;
+
+						// Set position
+						tooltipEl.style.position = 'absolute';
+						tooltipEl.style.left = tooltipModel.caretX + 'px';
+						tooltipEl.style.top = tooltipModel.caretY + tooltipModel.height/2 + 'px';
+						// console.log(tooltipModel)
+					}
+				},
+				onClick: function(evt, activeElements) {
+					if (activeElements.length > 0) {
+						var elementIndex = activeElements[0]._index;
+
+						// Redirect to dataview   
+						// var value = this.data.datasets[0].data[elementIndex];
+						// location.href="/dataview/?index=" + elementIndex + "&x=" + value.x + "&y=" + value.y + "&r=" + value.r
+
+						// Change color
+						var currentColor = this.data.datasets[0].backgroundColor[elementIndex];
+						var g = currentColor.match(/\d+/g)
+						var rgb = [g[0],g[1],g[2]]
+						console.log(this.data.datasets[0])
+						if (rgb[0] == color1[0] && rgb[1] == color1[1] && rgb[2] == color1[2]) {
+							this.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(color2,',0.3)');
+							this.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(color2,')');
+						} else {
+							this.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(color1,',0.3)');
+							this.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(color1,')');
+						}
+						this.update();
+					}
+				}
 			}
 		});
-		document.getElementById("myChart").onclick = function(evt)
-		{
-			var activePoints = myChart.getElementsAtEvent(evt);
-
-			if(activePoints.length > 0)
-			{
-				var clickedElementindex = activePoints[0]["_index"];   
-				var value = myChart.data.datasets[0].data[clickedElementindex];
-				location.href="/dataview/?index=" + clickedElementindex + "&x=" + value.x + "&y=" + value.y + "&r=" + value.r
-			}
-		}
 	}
 {% endblock %}
 </script>
@@ -78,6 +128,7 @@
 		<h1>Chart</h1>
 		<div class="col-lg-6">
 			<canvas id="myChart" width="400" height="400"></canvas>
+			<div id="chartjs-tooltip"></div>
 		</div>
 	</div>
 {% endblock content %}

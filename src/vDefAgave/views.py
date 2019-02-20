@@ -40,7 +40,12 @@ def chart(request):
 	return render(request, 'vDefAgave/chart.html', context)
 
 def getData(request):
-	labels = ["Red"]
+	myBlue = ['63','11','193'];
+	myRed = ['193','46','12'];
+
+	colors = ['blue','blue','blue',
+			  'red','red','red',
+			  'red','red','red']
 	defaultData = [{'x': 0.5,'y': 0.5,'r': 4},
 					{'x': 0.5,'y': 1.0,'r': 6},
 					{'x': 0.5,'y': 1.5,'r': 8},
@@ -50,9 +55,22 @@ def getData(request):
 					{'x': 1.5,'y': 0.5,'r': 8},
 					{'x': 1.5,'y': 1.0,'r': 20},
 					{'x': 1.5,'y': 1.5,'r': 30}]
+					
+	# Convert colors to rgb
+	colors = [('rgb(' + ','.join(myBlue) + ')') if color == 'blue' else ('rgb(' + ','.join(myRed) + ')') for color in colors]
+
+	borderColor = colors
+
+	# Set alpha value for background
+	colors = [re.sub('rgb','rgba',color) for color in colors]
+	backgroundColor = [re.sub(r'\)',',0.3)',color) for color in colors]
+	
 	data = {
-		'labels': labels,
 		'default': defaultData,
+		'backgroundColor': backgroundColor,
+		'borderColor': borderColor,
+		'color1': myBlue,
+		'color2': myRed
 	}
 	return JsonResponse(data)
 
