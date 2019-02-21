@@ -102,6 +102,28 @@ def agaveRequestAppsList(token):
 							verify=False)
 	return response.json()
 
+def agaveRequestClientList(username, password, clientName='vDef'):
+	"""List client
+	Agave equivalent: clients-list -u username -p password clientName
+	"""
+	params = (('pretty', 'true'),)
+	response = requests.get(BASEURL + 'clients/v2/' + clientName, 
+							params=params, 
+							verify=False, 
+							auth=(username, password))
+	return response.json()
+
+def agaveRequestClientDelete(username, password, clientName='vDef'):
+	"""Delete client
+	Agave equivalent: clients-delete -u username -p password clientName
+	"""
+	params = (('pretty', 'true'),)
+	response = requests.delete(BASEURL + 'clients/v2/' + clientName, 
+								params=params, 
+								verify=False, 
+								auth=(username, password))
+	return response.json()
+
 def agaveRequestCreateClient(username, password, clientName='vDef'):
 	"""Create a new client
 	Agave equivalent: clients-create -u username -p password -N clientName
@@ -160,13 +182,4 @@ def agaveRequestRefreshToken(user):
 								headers=headers, data=data, 
 								verify=False, 
 								auth=(clientKey, clientSecret))
-	response = response.json()
-	if not 'error' in response:
-		user.profile.accesstoken = response['access_token']
-		user.profile.refreshtoken = response['refresh_token']
-		expiresIn = response['expires_in']
-		currentTime = timezone.now()
-		user.profile.expiresin = expiresIn
-		user.profile.timecreated = currentTime
-		user.profile.expiresat = currentTime + timedelta(seconds=expiresIn)
-		user.save()
+	return response.json()
