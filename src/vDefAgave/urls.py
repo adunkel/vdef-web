@@ -11,7 +11,7 @@ urlpatterns = [
 	path('jobsubmit/', views.jobsubmit, name='vDefAgave-jobsubmit'),
 	path('joboutput/<str:jobId>/', views.joboutput, name='vDefAgave-joboutput'),
 	path('jobsearch/', views.jobsearch, name='vDefAgave-jobsearch'),
-	path('chart', views.chart, name='vDefAgave-chart'),
+	path('chart/', views.chart, name='vDefAgave-chart'),
 	path('api/data/', views.getData, name='vDef-getData'),
 	path('dataview/', views.dataView, name='vDefAgave-dataview'),
 ]
