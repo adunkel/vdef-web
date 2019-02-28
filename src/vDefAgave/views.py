@@ -33,28 +33,42 @@ def dataView(request):
 	return render(request, 'vDefAgave/viewdata.html', context)
 
 @login_required
-def chart(request):
+def chart(request,jobName):
 	context = {
-		'title': 'Chart'
+		'jobName': jobName
 	}
 	return render(request, 'vDefAgave/chart.html', context)
 
-def getData(request):
+@login_required
+def getData(request,jobName):
+	filePath = 'src/media/'
 	myBlue = ['63','11','193'];
 	myRed = ['193','46','12'];
+	colors = []
+	points = []
+	fileEnding = '_chart.json'
 
-	colors = ['blue','blue','blue',
-			  'red','red','red',
-			  'red','red','red']
-	defaultData = [{'x': 0.5,'y': 0.5,'r': 4},
-					{'x': 0.5,'y': 1.0,'r': 6},
-					{'x': 0.5,'y': 1.5,'r': 8},
-					{'x': 1.0,'y': 0.5,'r': 6},
-					{'x': 1.0,'y': 1.0,'r': 16},
-					{'x': 1.0,'y': 1.5,'r': 20},
-					{'x': 1.5,'y': 0.5,'r': 8},
-					{'x': 1.5,'y': 1.0,'r': 20},
-					{'x': 1.5,'y': 1.5,'r': 30}]
+	user = request.user
+	response = agaveRequestJobSearch(user.profile.accesstoken,jobName)
+	if response['result']:
+		# Download chart json file if they don't exist
+		for job in response['result']:
+			fileName = job['id'] + fileEnding
+			if not os.path.exists(filePath + fileName):
+				path = job['_links']['archiveData']['href']
+				fileResponse = agaveRequestGetFile(user.profile.accesstoken,path,fileName)
+				time.sleep(10) # Pause time
+
+				with open(filePath + fileName,'wb') as f:
+					f.write(fileResponse.content)
+
+		# Get data from chart json files
+		for job in response['result']:
+			fileName = job['id'] + fileEnding
+			with open(filePath + fileName,'r') as f:
+				pointData = json.load(f)
+				colors.append(pointData['color'])
+				points.append({'x':pointData['parameter']['K'],'y':pointData['parameter']['L'], 'r':pointData['value']})
 					
 	# Convert colors to rgb
 	colors = [('rgb(' + ','.join(myBlue) + ')') if color == 'blue' else ('rgb(' + ','.join(myRed) + ')') for color in colors]
@@ -66,7 +80,7 @@ def getData(request):
 	backgroundColor = [re.sub(r'\)',',0.3)',color) for color in colors]
 	
 	data = {
-		'default': defaultData,
+		'points': points,
 		'backgroundColor': backgroundColor,
 		'borderColor': borderColor,
 		'color1': myBlue,
@@ -98,6 +112,7 @@ def systems(request):
 def joboutput(request,jobId):
 	user = request.user
 	response = agaveRequestJobsOutputList(user.profile.accesstoken,jobId)
+	print(response)
 	context = {
 		'jobId': jobId,
 		'output': response['result'],
@@ -114,6 +129,7 @@ def jobsearch(request):
 		if form.is_valid():
 			jobName = form.cleaned_data.get('jobName')
 			response = agaveRequestJobSearch(user.profile.accesstoken,jobName)
+			print(response)
 			if not response['result']:
 				messages.warning(request, 'No jobs with the name %s were found.' % jobName)
 	else:
@@ -121,6 +137,7 @@ def jobsearch(request):
 	context = {
 	'form': form,
 	'response': response,
+	'jobName': jobName,
 	'title': 'Job Search'
 	}
 	return render(request, 'vDefAgave/jobsearch.html', context)
@@ -261,23 +278,29 @@ def jobsubmit(request):
 			jobids = []
 			failedJobs = []
 			for paraCombination in list(itertools.product(*space)):
-				vals = dict(zip(parameters,paraCombination))
+				paraDict = dict(zip(parameters,paraCombination))
 
-				geoFile = '_'.join(str(p) for p in paraCombination) + '_' + geoFileTemplate
-				yamlFile = '_'.join(str(p) for p in paraCombination) + '_' + yamlFileTemplate
+				# Create name for geo and yaml file
+				templateSplit = geoFileTemplate.rsplit('.',1)
+				geoFile = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
+				templateSplit = yamlFileTemplate.rsplit('.',1)
+				yamlFile = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
 
+				# Substitute value into geo template 
 				with open(geoFile,'w') as f:
 					with open(geoFileTemplate,'r') as templateFile:
+						print('//' + str(paraDict),file=f) # Adding parameters to top of file
 						for line in templateFile.readlines():
 							g = re.search(r'{{(\w+)}}',line)
 							if g:
 								start = line[0:g.start()]
 								end = line[g.end():]
 								var = g.group(1)
-								print(start,vals[var],end,sep='',end='',file=f)
+								print(start,paraDict[var],end,sep='',end='',file=f)
 							else:
 								print(line,end='',file=f)
 
+				# Substitute value into yaml template 
 				with open(yamlFile,'w') as f:
 					with open(yamlFileTemplate,'r') as templateFile:
 						for line in templateFile.readlines():
@@ -286,7 +309,7 @@ def jobsubmit(request):
 								start = line[0:g.start()]
 								end = line[g.end():]
 								var = g.group(1)
-								print(start,vals[var],end,sep='',end='',file=f)
+								print(start,paraDict[var],end,sep='',end='',file=f)
 							else:
 								print(line,end='',file=f)
 
@@ -310,7 +333,7 @@ def jobsubmit(request):
 					json.dump(job, outfile, indent=4)
 
 				# Submit the job
-				# time.sleep(10) # Pause time
+				time.sleep(10) # Pause time
 				response = agaveRequestSubmitJob(user.profile.accesstoken)
 
 
@@ -320,9 +343,9 @@ def jobsubmit(request):
 					failedJobs.append(response['message'])
 
 				# Pause time between jobs
-				# for i in reversed(range(9)):
-				# 	print('Time ' + str(i*10))
-				# 	time.sleep(10)	
+				for i in reversed(range(9)):
+					print('Time ' + str(i*10))
+					time.sleep(10)	
 
 			if len(jobids) > 0:
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobids),jobids))

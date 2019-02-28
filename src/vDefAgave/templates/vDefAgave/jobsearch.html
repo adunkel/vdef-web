@@ -13,8 +13,11 @@
 		<div class="media-body">
 			<h3>Results</h3>
 			{% for job in response.result %}
-			<p class="article-content"><a href="{% url 'vDefAgave-joboutput' job.id %}">{{ job.id }}</a></p>
-			{% endfor %}			
+			<p class="article-content">{{ job.id }}</p>
+			{% endfor %}
+			<form action="{% url 'vDefAgave-chart' jobName %}">
+				<input type="submit" value="View Chart" />
+			</form>			
 		</div>
 	</article>
 	{% endif %}

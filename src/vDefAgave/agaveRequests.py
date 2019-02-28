@@ -2,6 +2,7 @@ import requests
 from django.contrib.auth.models import User
 from datetime import timedelta 
 from django.utils import timezone
+import re
 
 # BASEURL = 'https://public.agaveapi.co/'
 BASEURL = 'https://api.tacc.utexas.edu/'
@@ -20,6 +21,16 @@ def agaveRequestUploadFile(token,fileName,system,location):
 							 files=files, 
 							 verify=False)
 	return response.json()
+
+def agaveRequestGetFile(token,path,fileName):
+	headers = {'Authorization': 'Bearer ' + token}
+	path = re.sub('listings','media',path)
+
+	link = path + '/' + fileName
+	response = requests.get(link, 
+							headers=headers, 
+							verify=False)
+	return response
 
 def agaveRequestJobSearch(token,jobName):
 	"""Searches for all jobs with the name jobName.
@@ -40,6 +51,7 @@ def agaveRequestJobsOutputList(token,jobId):
 	"""
 	headers = {'Authorization': 'Bearer ' + token}
 	params = (('pretty', 'true'),)
+	print(jobId)
 
 	response = requests.get(BASEURL + 'jobs/v2/' + jobId + '/outputs/listings/', 
 							headers=headers, 

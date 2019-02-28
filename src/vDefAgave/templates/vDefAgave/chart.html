@@ -2,8 +2,8 @@
 
 <script>
 {% block jquery %}
-	var endpoint = '/api/data/'
-	var defaultData = []
+	var endpoint = '/api/data/' + '{{ jobName }}'
+	var points = []
 	var backgroundColor = []
 	var borderColor = []
 	var color1 = []
@@ -12,7 +12,7 @@
 		method: "GET",
 		url: endpoint,
 		success: function(data){
-			defaultData = data.default
+			points = data.points
 			backgroundColor = data.backgroundColor
 			borderColor = data.borderColor
 			color1 = data.color1
@@ -27,15 +27,13 @@
 
 	function setChart(){
 		var ctx = document.getElementById("myChart").getContext('2d');
-		console.log(borderColor)
 		var myChart = new Chart(ctx, {
 			type: 'bubble',
 			data: {
 				datasets: [{
-					
 					backgroundColor: backgroundColor,
 					borderColor: borderColor,
-					data: defaultData
+					data: points
 				}]
 			},
 			options: {
@@ -125,7 +123,7 @@
 
 {% block content %}
 	<div class="content-section">
-		<h1>Chart</h1>
+		<h1>{{ jobName }}</h1>
 		<div class="col-lg-6">
 			<canvas id="myChart" width="400" height="400"></canvas>
 			<div id="chartjs-tooltip"></div>
