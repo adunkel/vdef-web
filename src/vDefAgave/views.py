@@ -44,6 +44,8 @@ def getData(request,jobName):
 	filePath = 'src/media/'
 	myBlue = ['63','11','193'];
 	myRed = ['193','46','12'];
+	colorDefinitions = {'red': ['193','46','12'],
+						'blue': ['63','11','193']}
 	colors = []
 	points = []
 	fileEnding = '_chart.json'
@@ -63,15 +65,22 @@ def getData(request,jobName):
 					f.write(fileResponse.content)
 
 		# Get data from chart json files
+		paraNames = []
 		for job in response['result']:
 			fileName = job['id'] + fileEnding
 			with open(filePath + fileName,'r') as f:
 				pointData = json.load(f)
+
+				# Determine parameter names and order
+				if not paraNames:
+					paraNames = [*pointData['parameter']]
+
 				colors.append(pointData['color'])
-				points.append({'x':pointData['parameter']['K'],'y':pointData['parameter']['L'], 'r':pointData['value']})
+				points.append({'x':pointData['parameter'][paraNames[0]],'y':pointData['parameter'][paraNames[1]], 'r':pointData['value']})
 					
 	# Convert colors to rgb
-	colors = [('rgb(' + ','.join(myBlue) + ')') if color == 'blue' else ('rgb(' + ','.join(myRed) + ')') for color in colors]
+	colors = [('rgb(' + ','.join(colorDefinitions[color]) + ')') for color in colors]
+	# colors = [('rgb(' + ','.join(myBlue) + ')') if color == 'blue' else ('rgb(' + ','.join(myRed) + ')') for color in colors]
 
 	borderColor = colors
 
@@ -83,8 +92,10 @@ def getData(request,jobName):
 		'points': points,
 		'backgroundColor': backgroundColor,
 		'borderColor': borderColor,
+		'colorDefinitions': colorDefinitions,
 		'color1': myBlue,
-		'color2': myRed
+		'color2': myRed,
+		'axisLabels': paraNames
 	}
 	return JsonResponse(data)
 

@@ -8,6 +8,8 @@
 	var borderColor = []
 	var color1 = []
 	var color2 = []
+	var axisLabels = []
+	var colorDefinitions = []
 	$.ajax({
 		method: "GET",
 		url: endpoint,
@@ -15,8 +17,10 @@
 			points = data.points
 			backgroundColor = data.backgroundColor
 			borderColor = data.borderColor
+			colorDefinitions = data.colorDefinitions
 			color1 = data.color1
 			color2 = data.color2
+			axisLabels = data.axisLabels
 			setChart()
 		},
 		error: function(error_data){
@@ -55,39 +59,41 @@
 		}
 	}
 
-	// Chart Options
-	var options = {
-		title: {
-			display: true,
-			text: 'Title'
-		},
-		legend:{
-			display: false
-		},
-		scales: {
-			yAxes: [{ 
-				scaleLabel: {
-					display: true,
-					labelString: "X"
-				},
-				ticks: {
-					beginAtZero:true
-				}
-			}],
-			xAxes: [{ 
-				scaleLabel: {
-					display: true,
-					labelString: "Y"
-				},
-				ticks: {
-					beginAtZero:true
-				}
-			}]
-		},
-		tooltips: tooltips
-	};
 
 	function setChart(){
+		// Chart Options
+		var options = {
+			title: {
+				display: true,
+				text: 'Title'
+			},
+			legend:{
+				display: false
+			},
+			scales: {
+				yAxes: [{ 
+					scaleLabel: {
+						display: true,
+						labelString: axisLabels[0]
+					},
+					ticks: {
+						beginAtZero:true
+					}
+				}],
+				xAxes: [{ 
+					scaleLabel: {
+						display: true,
+						labelString: axisLabels[1]
+					},
+					ticks: {
+						beginAtZero:true
+					}
+				}]
+			},
+			tooltips: tooltips
+		};
+
+		// Setup Chart
 		var ctx = document.getElementById("myChart").getContext('2d');
 		var myChart = new Chart(ctx, {
 			type: 'bubble',
@@ -98,9 +104,39 @@
 					data: points
 				}]
 			},
-			options: options
+			options: {
+				title: {
+					display: true,
+					text: 'Title'
+				},
+				legend:{
+					display: false
+				},
+				scales: {
+					yAxes: [{ 
+						scaleLabel: {
+							display: true,
+							labelString: axisLabels[0]
+						},
+						ticks: {
+							beginAtZero:true
+						}
+					}],
+					xAxes: [{ 
+						scaleLabel: {
+							display: true,
+							labelString: axisLabels[1]
+						},
+						ticks: {
+							beginAtZero:true
+						}
+					}]
+				},
+				tooltips: tooltips
+			}
 		});
 
+		// Set custom onclick function
 		document.getElementById("myChart").onclick = function(evt) {
 			var activeElements = myChart.getElementsAtEvent(evt)
 			if (activeElements.length > 0) {
@@ -110,17 +146,30 @@
 				// var value = this.data.datasets[0].data[elementIndex];
 				// location.href="/dataview/?index=" + elementIndex + "&x=" + value.x + "&y=" + value.y + "&r=" + value.r
 
-				// Change color
+				// Get current color rgb values
 				var currentColor = myChart.data.datasets[0].backgroundColor[elementIndex];
-				var g = currentColor.match(/\d+/g)
-				var rgb = [g[0],g[1],g[2]]
-				if (rgb[0] == color1[0] && rgb[1] == color1[1] && rgb[2] == color1[2]) {
-					myChart.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(color2,',0.3)');
-					myChart.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(color2,')');
-				} else {
-					myChart.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(color1,',0.3)');
-					myChart.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(color1,')');
+				var g = currentColor.match(/\d+/g);
+				var rgb = [g[0],g[1],g[2]];
+
+				// Get current color name
+				var currentColorName = '';
+				for (var key in colorDefinitions) {
+					if (rgb[0] == colorDefinitions[key][0] && rgb[1] == colorDefinitions[key][1] && rgb[2] == colorDefinitions[key][2]) {
+						currentColorName = key;
+					}
 				}
+
+				// Get new color name
+				var newColorName = '';
+				if (currentColorName == 'blue') {
+					newColorName = 'red';
+				} else {
+					newColorName = 'blue'
+				}
+
+				// Change color
+				myChart.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(colorDefinitions[newColorName],',0.3)');
+				myChart.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(colorDefinitions[newColorName],')');
 				myChart.update();
 			}
 		}
