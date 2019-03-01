@@ -124,6 +124,7 @@ def joboutput(request,jobId):
 def jobsearch(request):
 	user = request.user
 	response = {}
+	jobName = ''
 	if request.method == 'POST':
 		form = JobSearchForm(request.POST)
 		if form.is_valid():

@@ -25,6 +25,68 @@
 		}
 	})
 
+	// Chart Tooltip
+	var tooltips = {
+		// Disable the on-canvas tooltip
+		enabled: false,
+
+		custom: function(tooltipModel) {
+			// Tooltip Element
+			var tooltipEl = document.getElementById('chartjs-tooltip');
+
+			// Hide if no tooltip
+			if (tooltipModel.opacity === 0) {
+				tooltipEl.innerHTML = '';
+				tooltipEl.style.opacity = 0;
+				return;
+			} else {
+				tooltipEl.style.opacity = 1;
+			}
+
+			// Set pitcture
+			var innerHtml = '<img src="https://www.math.lsu.edu//~bourdin//images/defectmechanics-effectivetoughness-1.png" style="max-height: 150px; width: auto;">';
+			tooltipEl.innerHTML = innerHtml;
+
+			// Set position
+			tooltipEl.style.position = 'absolute';
+			tooltipEl.style.left = tooltipModel.caretX + 'px';
+			tooltipEl.style.top = tooltipModel.caretY + tooltipModel.height/2 + 'px';
+			// console.log(tooltipModel)
+		}
+	}
+
+	// Chart Options
+	var options = {
+		title: {
+			display: true,
+			text: 'Title'
+		},
+		legend:{
+			display: false
+		},
+		scales: {
+			yAxes: [{ 
+				scaleLabel: {
+					display: true,
+					labelString: "X"
+				},
+				ticks: {
+					beginAtZero:true
+				}
+			}],
+			xAxes: [{ 
+				scaleLabel: {
+					display: true,
+					labelString: "Y"
+				},
+				ticks: {
+					beginAtZero:true
+				}
+			}]
+		},
+		tooltips: tooltips
+	};
+
 	function setChart(){
 		var ctx = document.getElementById("myChart").getContext('2d');
 		var myChart = new Chart(ctx, {
@@ -36,87 +98,32 @@
 					data: points
 				}]
 			},
-			options: {
-				title: {
-					display: true,
-					text: 'Title'
-				},
-				legend:{
-					display: false
-				},
-				scales: {
-					yAxes: [{ 
-						scaleLabel: {
-							display: true,
-							labelString: "X"
-						},
-						ticks: {
-							beginAtZero:true
-						}
-					}],
-					xAxes: [{ 
-						scaleLabel: {
-							display: true,
-							labelString: "Y"
-						},
-						ticks: {
-							beginAtZero:true
-						}
-					}]
-				},
-				tooltips: {
-					// Disable the on-canvas tooltip
-					enabled: false,
-
-					custom: function(tooltipModel) {
-						// Tooltip Element
-						var tooltipEl = document.getElementById('chartjs-tooltip');
-
-						// Hide if no tooltip
-						if (tooltipModel.opacity === 0) {
-							tooltipEl.innerHTML = '';
-							tooltipEl.style.opacity = 0;
-							return;
-						} else {
-							tooltipEl.style.opacity = 1;
-						}
-
-						// Set pitcture
-						var innerHtml = '<img src="https://www.math.lsu.edu//~bourdin//images/defectmechanics-effectivetoughness-1.png" style="max-height: 200px; width: auto;">';
-						tooltipEl.innerHTML = innerHtml;
-
-						// Set position
-						tooltipEl.style.position = 'absolute';
-						tooltipEl.style.left = tooltipModel.caretX + 'px';
-						tooltipEl.style.top = tooltipModel.caretY + tooltipModel.height/2 + 'px';
-						// console.log(tooltipModel)
-					}
-				},
-				onClick: function(evt, activeElements) {
-					if (activeElements.length > 0) {
-						var elementIndex = activeElements[0]._index;
-
-						// Redirect to dataview   
-						// var value = this.data.datasets[0].data[elementIndex];
-						// location.href="/dataview/?index=" + elementIndex + "&x=" + value.x + "&y=" + value.y + "&r=" + value.r
-
-						// Change color
-						var currentColor = this.data.datasets[0].backgroundColor[elementIndex];
-						var g = currentColor.match(/\d+/g)
-						var rgb = [g[0],g[1],g[2]]
-						console.log(this.data.datasets[0])
-						if (rgb[0] == color1[0] && rgb[1] == color1[1] && rgb[2] == color1[2]) {
-							this.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(color2,',0.3)');
-							this.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(color2,')');
-						} else {
-							this.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(color1,',0.3)');
-							this.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(color1,')');
-						}
-						this.update();
-					}
-				}
-			}
+			options: options
 		});
+
+		document.getElementById("myChart").onclick = function(evt) {
+			var activeElements = myChart.getElementsAtEvent(evt)
+			if (activeElements.length > 0) {
+				var elementIndex = activeElements[0]._index;
+
+				// Redirect to dataview   
+				// var value = this.data.datasets[0].data[elementIndex];
+				// location.href="/dataview/?index=" + elementIndex + "&x=" + value.x + "&y=" + value.y + "&r=" + value.r
+
+				// Change color
+				var currentColor = myChart.data.datasets[0].backgroundColor[elementIndex];
+				var g = currentColor.match(/\d+/g)
+				var rgb = [g[0],g[1],g[2]]
+				if (rgb[0] == color1[0] && rgb[1] == color1[1] && rgb[2] == color1[2]) {
+					myChart.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(color2,',0.3)');
+					myChart.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(color2,')');
+				} else {
+					myChart.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(color1,',0.3)');
+					myChart.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(color1,')');
+				}
+				myChart.update();
+			}
+		}
 	}
 {% endblock %}
 </script>
@@ -124,7 +131,7 @@
 {% block content %}
 	<div class="content-section">
 		<h1>{{ jobName }}</h1>
-		<div class="col-lg-6">
+		<div class="col-md-6">
 			<canvas id="myChart" width="400" height="400"></canvas>
 			<div id="chartjs-tooltip"></div>
 		</div>
