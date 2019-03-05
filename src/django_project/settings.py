@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'vDefAgave.apps.VdefagaveConfig',
     'users.apps.UsersConfig',
+    'jobs.apps.JobsConfig',
     'crispy_forms',
     'django.contrib.admin',
     'django.contrib.auth',
