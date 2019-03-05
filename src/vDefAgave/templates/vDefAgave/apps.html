@@ -7,7 +7,7 @@
 				<small class="mr-2">{{ app.id }}</small>
 				<small class="text-muted">{{ app.lastModified }}</small>
 			</div>
-			<h3><a class="article-title" href="{% url 'vDefAgave-jobsetup' %}?appId={{app.id}}">{{ app.label }}</a></h3>
+			<h3><a class="article-title" href="{% url 'jobs-setup' %}?appId={{app.id}}">{{ app.label }}</a></h3>
 			<p class="article-content">{{ app.shortDescription }}</p>
 		</div>
 	</article>

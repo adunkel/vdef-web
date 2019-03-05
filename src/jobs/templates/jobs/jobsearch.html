@@ -15,7 +15,7 @@
 			{% for job in response.result %}
 			<p class="article-content">{{ job.id }}</p>
 			{% endfor %}
-			<form action="{% url 'vDefAgave-chart' jobName %}">
+			<form action="{% url 'jobs-chart' jobName %}">
 				<input type="submit" value="View Chart" />
 			</form>			
 		</div>
