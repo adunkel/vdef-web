@@ -180,7 +180,7 @@ def setup(request):
 					for chunk in file.chunks():
 						destination.write(chunk)
 
-			return redirect(reverse('vDefAgave-jobsubmit') + '?appId=' + appId 
+			return redirect(reverse('jobs-submit') + '?appId=' + appId 
 														   + '&archiveSystem=' + archiveSystem
 														   + '&executionSystem=' + executionSystem
 														   + '&geoFile=' + geoFileName
@@ -340,6 +340,8 @@ def submit(request):
 
 				if response['status'] == 'success':
 					jobids.append(response['result']['id'])
+					# Create entry for job
+					Job(name=name,jobid=response['result']['id'],user=user).save()
 				else:
 					failedJobs.append(response['message'])
 
