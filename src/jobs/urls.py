@@ -9,6 +9,7 @@ urlpatterns = [
 	path('joboutput/<str:jobId>/', views.output, name='jobs-output'),
 	path('jobsearch/', views.search, name='jobs-search'),
 	path('chart/<str:jobName>/', views.chart, name='jobs-chart'),
-	path('api/data/<str:jobName>/', views.getData, name='jobs-getData'),
+	path('data/<str:jobName>/', views.getData, name='jobs-getData'),
+	path('data/update/color/<str:jobId>', views.updateColor, name='jobs-updateColor'),
 	path('dataview/', views.dataView, name='jobs-dataview'),
 ]

@@ -2,30 +2,29 @@
 
 <script>
 {% block jquery %}
-	var endpoint = '/api/data/' + '{{ jobName }}'
-	var points = []
-	var backgroundColor = []
-	var borderColor = []
-	var color1 = []
-	var color2 = []
-	var axisLabels = []
-	var colorDefinitions = []
+	var endpoint = '/data/' + '{{ jobName }}'
+	var points = [];
+	var backgroundColor = [];
+	var borderColor = [];
+	var axisLabels = [];
+	var colorDefinitions = [];
+	var jobIds = [];
+
 	$.ajax({
 		method: "GET",
 		url: endpoint,
 		success: function(data){
-			points = data.points
-			backgroundColor = data.backgroundColor
-			borderColor = data.borderColor
-			colorDefinitions = data.colorDefinitions
-			color1 = data.color1
-			color2 = data.color2
-			axisLabels = data.axisLabels
+			points = data.points;
+			backgroundColor = data.backgroundColor;
+			borderColor = data.borderColor;
+			colorDefinitions = data.colorDefinitions;
+			axisLabels = data.axisLabels;
+			jobIds = data.jobIds;
 			setChart()
 		},
 		error: function(error_data){
-			console.log("error")
-			console.log(error_data)
+			console.log("error");
+			console.log(error_data);
 		}
 	})
 
@@ -171,6 +170,18 @@
 				myChart.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(colorDefinitions[newColorName],',0.3)');
 				myChart.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(colorDefinitions[newColorName],')');
 				myChart.update();
+
+				$.ajax({
+					method: "GET",
+					url: '/data/update/color/' + jobIds[elementIndex] + '?color=' + newColorName,
+					success: function(data){
+						console.log('Color changed')
+					},
+					error: function(error_data){
+						console.log("error");
+						console.log(error_data);
+					}
+				})
 			}
 		}
 	}

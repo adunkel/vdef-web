@@ -6,6 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django import forms
 from vDefAgave.agaveRequests import *
 from .forms import JobSubmitForm, JobSearchForm, JobSetupForm
+from .models import Job
 import json, requests, os, re, time, itertools
 import numpy as np
 
@@ -32,10 +33,19 @@ def chart(request,jobName):
 	return render(request, 'jobs/chart.html', context)
 
 @login_required
+def updateColor(request,jobId):
+	color = request.GET.get('color','')
+	user = request.user
+	job = user.job_set.filter(jobid=jobId).first()
+	job.color = color
+	job.save()
+	data = {
+		'job id': job.jobid
+	}
+	return JsonResponse(data)
+
+@login_required
 def getData(request,jobName):
-	filePath = 'src/media/'
-	myBlue = ['63','11','193'];
-	myRed = ['193','46','12'];
 	colorDefinitions = {'red': ['193','46','12'],
 						'blue': ['63','11','193']}
 	colors = []
@@ -43,51 +53,59 @@ def getData(request,jobName):
 	fileEnding = '_chart.json'
 
 	user = request.user
-	response = agaveRequestJobSearch(user.profile.accesstoken,jobName)
-	if response['result']:
-		# Download chart json file if they don't exist
-		for job in response['result']:
-			fileName = job['id'] + fileEnding
-			if not os.path.exists(filePath + fileName):
-				path = job['_links']['archiveData']['href']
-				fileResponse = agaveRequestGetFile(user.profile.accesstoken,path,fileName)
-				time.sleep(10) # Pause time
+	jobs = user.job_set.filter(name=jobName)
 
-				with open(filePath + fileName,'wb') as f:
-					f.write(fileResponse.content)
-
-		# Get data from chart json files
+	if jobs:
+		# Download chart json and save to jobs model if needed
+		response = ''
 		paraNames = []
-		for job in response['result']:
-			fileName = job['id'] + fileEnding
-			with open(filePath + fileName,'r') as f:
-				pointData = json.load(f)
-
+		for job in jobs:
+			if not job.value:
+				jobResponse = agaveRequestJobSearch(user.profile.accesstoken,jobId=job.jobid)
+				fileName = job.jobid + fileEnding
+				path = jobResponse['result'][0]['_links']['archiveData']['href']
+				fileResponse = agaveRequestGetFile(user.profile.accesstoken,path,fileName)
+				print(fileResponse.content)
+				pointData = json.loads(fileResponse.text)
 				# Determine parameter names and order
 				if not paraNames:
 					paraNames = [*pointData['parameter']]
+				job.value = pointData['value']
+				job.color = pointData['color']
+				job.para1name = paraNames[0]
+				job.para2name = paraNames[1]
+				job.para1value = pointData['parameter'][paraNames[0]]
+				job.para2value = pointData['parameter'][paraNames[1]]
+				job.save()				
 
-				colors.append(pointData['color'])
-				points.append({'x':pointData['parameter'][paraNames[0]],'y':pointData['parameter'][paraNames[1]], 'r':pointData['value']})
+				time.sleep(5) # Pause time
+
+		# Prepare data
+		jobs = user.job_set.filter(name=jobName)
+		for job in jobs:
+			if not paraNames:
+				paraNames = [job.para1name,job.para2name]
+			colors.append(job.color)
+			points.append({'x':job.para1value,'y':job.para2value, 'r':job.value})
 					
 	# Convert colors to rgb
 	colors = [('rgb(' + ','.join(colorDefinitions[color]) + ')') for color in colors]
-	# colors = [('rgb(' + ','.join(myBlue) + ')') if color == 'blue' else ('rgb(' + ','.join(myRed) + ')') for color in colors]
 
 	borderColor = colors
 
 	# Set alpha value for background
 	colors = [re.sub('rgb','rgba',color) for color in colors]
 	backgroundColor = [re.sub(r'\)',',0.3)',color) for color in colors]
+
+	jobIds = [job.jobid for job in jobs]
 	
 	data = {
 		'points': points,
 		'backgroundColor': backgroundColor,
 		'borderColor': borderColor,
 		'colorDefinitions': colorDefinitions,
-		'color1': myBlue,
-		'color2': myRed,
-		'axisLabels': paraNames
+		'axisLabels': paraNames,
+		'jobIds': jobIds
 	}
 	return JsonResponse(data)
 
@@ -106,21 +124,20 @@ def output(request,jobId):
 @login_required
 def search(request):
 	user = request.user
-	response = {}
 	jobName = ''
+	jobs = ''
 	if request.method == 'POST':
 		form = JobSearchForm(request.POST)
 		if form.is_valid():
 			jobName = form.cleaned_data.get('jobName')
-			response = agaveRequestJobSearch(user.profile.accesstoken,jobName)
-			print(response)
-			if not response['result']:
+			jobs = user.job_set.filter(name=jobName)
+			if not jobs:
 				messages.warning(request, 'No jobs with the name %s were found.' % jobName)
 	else:
 		form = JobSearchForm()
 	context = {
 	'form': form,
-	'response': response,
+	'jobs': jobs,
 	'jobName': jobName,
 	'title': 'Job Search'
 	}

@@ -7,7 +7,6 @@ class Job(models.Model):
 	jobid = models.CharField(max_length=50)
 	color = models.CharField(max_length=20, blank=True)
 	value = models.IntegerField(null=True, blank=True)
-	image = models.ImageField(blank=True)
 	para1name = models.CharField(max_length=20, blank=True)
 	para2name = models.CharField(max_length=20, blank=True)
 	para1value = models.IntegerField(null=True, blank=True)

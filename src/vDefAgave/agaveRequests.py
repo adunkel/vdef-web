@@ -32,12 +32,16 @@ def agaveRequestGetFile(token,path,fileName):
 							verify=False)
 	return response
 
-def agaveRequestJobSearch(token,jobName):
+def agaveRequestJobSearch(token,jobName='',jobId=''):
 	"""Searches for all jobs with the name jobName.
-	Agave equivalent: jbos-search 'name=jobName'
+	Agave equivalent: jobs-search 'name=jobName'
 	"""
 	headers = {'Authorization': 'Bearer ' + token}
-	params = (('name', jobName),)
+	# params = (('pretty', 'true'),)
+	if jobName:
+		params = (('name', jobName),)
+	if jobId:
+		params = (('id', jobId),)
 
 	response = requests.get(BASEURL + 'jobs/v2', 
 							 headers=headers, 
