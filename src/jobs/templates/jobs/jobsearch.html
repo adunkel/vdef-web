@@ -12,12 +12,14 @@
 		<article class="media content-section">
 			<div class="media-body">
 				<h3>Results</h3>
-				{% for job in jobs %}
-					<p class="article-content">{{ job.jobid }}</p>
+				{% for jobid,status in jobs.items %}
+					<p class="article-content">{{ jobid }} - {{ status }}</p>
 				{% endfor %}
-				<form action="{% url 'jobs-chart' jobName %}">
-					<input type="submit" value="View Chart" />
-				</form>	
+				{% if canViewChart %}
+					<form action="{% url 'jobs-chart' jobName %}">
+						<input type="submit" value="View Chart" />
+					</form>	
+				{% endif %}
 			</div>
 		</article>
 	{% endif %}

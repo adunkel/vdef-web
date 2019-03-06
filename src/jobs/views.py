@@ -124,13 +124,23 @@ def output(request,jobId):
 @login_required
 def search(request):
 	user = request.user
+	jobs = {}
 	jobName = ''
-	jobs = ''
+	canViewChart = True
+	
 	if request.method == 'POST':
 		form = JobSearchForm(request.POST)
 		if form.is_valid():
 			jobName = form.cleaned_data.get('jobName')
-			jobs = user.job_set.filter(name=jobName)
+			response = agaveRequestJobSearch(user.profile.accesstoken,jobName=jobName)
+			# jobsInDb = user.job_set.filter(name=jobName)
+			result = response['result']
+			for job in result:
+				jobId = job['id']
+				status = job['status']
+				jobs[jobId] = status
+				if status != 'FINISHED':
+					canViewChart = False
 			if not jobs:
 				messages.warning(request, 'No jobs with the name %s were found.' % jobName)
 	else:
@@ -139,6 +149,7 @@ def search(request):
 	'form': form,
 	'jobs': jobs,
 	'jobName': jobName,
+	'canViewChart': canViewChart,
 	'title': 'Job Search'
 	}
 	return render(request, 'jobs/jobsearch.html', context)
