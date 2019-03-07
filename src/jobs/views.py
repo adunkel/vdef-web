@@ -122,37 +122,41 @@ def output(request,jobId):
 	return render(request, 'jobs/joboutput.html', context)
 
 @login_required
-def search(request):
+def list(request):
 	user = request.user
-	jobs = {}
-	jobName = ''
-	canViewChart = True
-	
-	if request.method == 'POST':
-		form = JobSearchForm(request.POST)
-		if form.is_valid():
-			jobName = form.cleaned_data.get('jobName')
-			response = agaveRequestJobSearch(user.profile.accesstoken,jobName=jobName)
-			# jobsInDb = user.job_set.filter(name=jobName)
-			result = response['result']
-			for job in result:
-				jobId = job['id']
-				status = job['status']
-				jobs[jobId] = status
+	jobStatus = []
+
+	# Get distinct job names in database by user
+	jobNames = user.job_set.values_list('name').distinct()
+	jobNames = [i for sub in jobNames for i in sub]
+	for jobName in jobNames:
+		response = {}
+		finished = True
+		jobs = Job.objects.filter(name=jobName)
+		for job in jobs:
+			# If status is not finished in db, get current status
+			if job.status != 'FINISHED':
+				response = agaveRequestJobSearch(user.profile.accesstoken,jobId=job.jobid)
+				status = response['result'][0]['status']
+				job.status = status
+				job.save()
 				if status != 'FINISHED':
-					canViewChart = False
-			if not jobs:
-				messages.warning(request, 'No jobs with the name %s were found.' % jobName)
-	else:
-		form = JobSearchForm()
+					# break if one subjob is not finished
+					finished = False
+					break
+		if finished:
+			jobStatus.append('FINISHED')
+		else:
+			jobStatus.append(status)
+
+	# Create jobname:status dictionary
+	jobs = dict(zip(jobNames,jobStatus))
+	
 	context = {
-	'form': form,
 	'jobs': jobs,
-	'jobName': jobName,
-	'canViewChart': canViewChart,
-	'title': 'Job Search'
+	'title': 'Job List'
 	}
-	return render(request, 'jobs/jobsearch.html', context)
+	return render(request, 'jobs/joblist.html', context)
 
 @login_required
 def setup(request):

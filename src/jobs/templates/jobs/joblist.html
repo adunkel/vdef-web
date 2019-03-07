@@ -1,0 +1,16 @@
+{% extends "vDefAgave/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+	<article class="media content-section">
+		<div class="media-body">
+			<h3 class="article-title">Job List</h3>
+			{% for name,status in jobs.items %}
+				{% if status == 'FINISHED' %}
+					<a href="{% url 'jobs-chart' name %}">{{ name }} - {{ status }}</a><br>
+				{% else %}
+					{{ name }} - {{ status }}<br>
+				{% endif %}
+			{% endfor %}
+		</div>
+	</article>
+{% endblock content %}
