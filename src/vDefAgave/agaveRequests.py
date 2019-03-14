@@ -7,6 +7,27 @@ import re
 # BASEURL = 'https://public.agaveapi.co/'
 BASEURL = 'https://api.tacc.utexas.edu/'
 
+def agaveRequestMetadataUpdate(token, jobIds, jobName):
+	"""Update metadata
+	Agave equivalent: metadata-addupdate
+	"""
+	headers = {
+		'Authorization': 'Bearer ' + token,
+		'Content-Type': 'application/json',
+	}
+	params = (('pretty', 'true'),)
+
+	jobIds = '["' + '","'.join(jobIds) + '"]'
+
+	data = '{"value": {"jobName": ' + jobName + '}}, "name": "vDef", "associationIds":' + jobIds + '}'
+
+	response = requests.post(BASEURL + 'meta/v2/data/', 
+							 headers=headers, 
+							 params=params, 
+							 data=data, 
+							 verify=False)
+	return response.json()
+
 def agaveRequestUploadFile(token,fileName,system,location):
 	"""Uploads a file to system with location
 	Agave equivalent: jobs-upload -F fileName -S system location
