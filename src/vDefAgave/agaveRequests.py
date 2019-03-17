@@ -28,13 +28,16 @@ def agaveRequestMetadataUpdate(token, jobIds, jobName):
 							 verify=False)
 	return response.json()
 
-def agaveRequestUploadFile(token,fileName,system,location):
+def agaveRequestUploadFile(token,data,fileName,system,location):
 	"""Uploads a file to system with location
-	Agave equivalent: jobs-upload -F fileName -S system location
+	Agave equivalent: jobs-upload -F - <<< data -S system location
 	"""
 	headers = {'Authorization': 'Bearer ' + token}
 	params = (('pretty', 'true'),)
-	files = {'fileToUpload': (fileName, open(fileName, 'rb')),}
+	files = {
+		'fileToUpload': (None, data),
+		'fileName': (None, fileName),
+	}
 
 	response = requests.post(BASEURL + 'files/v2/media/system/' + system + '/' + location, 
 							 headers=headers, 

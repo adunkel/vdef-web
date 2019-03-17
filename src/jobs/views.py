@@ -122,7 +122,7 @@ def output(request,jobId):
 	return render(request, 'jobs/joboutput.html', context)
 
 @login_required
-def list(request):
+def listJobs(request):
 	user = request.user
 	jobStatus = []
 
@@ -196,17 +196,17 @@ def setup(request):
 						destination.write(chunk)
 
 			return redirect(reverse('jobs-submit') + '?appId=' + appId 
-														   + '&archiveSystem=' + archiveSystem
-														   + '&executionSystem=' + executionSystem
-														   + '&geoFile=' + geoFileName
-														   + '&yamlFile=' + yamlFileName)
+												   + '&archiveSystem=' + archiveSystem
+												   + '&executionSystem=' + executionSystem
+												   + '&geoFile=' + geoFileName
+												   + '&yamlFile=' + yamlFileName)
 	else:
 		form = JobSetupForm(inputs=inputs, availableSystems=availableSystems)
 
 	context = {
-	'form': form,
-	'appId': appId,
-	'title': 'Submit Job'
+		'form': form,
+		'appId': appId,
+		'title': 'Submit Job'
 	}
 	return render(request, 'jobs/jobsubmit.html', context)
 
@@ -231,8 +231,7 @@ def submit(request):
 			g = re.search(r'{{(\w+)}}',line)
 			if g:
 				parameters.append(g.group(1))
-	parameters = list(set(parameters))
-
+	parameters = set(parameters)
 
 	if request.method == 'POST':
 		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters)
@@ -293,89 +292,84 @@ def submit(request):
 			jobFileName = 'job.txt'
 			jobids = []
 			failedJobs = []
+			print(space)
 			for paraCombination in list(itertools.product(*space)):
+				print(paraCombination)
 				paraDict = dict(zip(parameters,paraCombination))
 
 				# Create name for geo and yaml file
 				templateSplit = geoFileTemplate.rsplit('.',1)
-				geoFile = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
+				geoFileName = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
 				templateSplit = yamlFileTemplate.rsplit('.',1)
-				yamlFile = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
+				yamlFileName = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
 
 				# Substitute value into geo template 
-				with open(geoFile,'w') as f:
-					with open(geoFileTemplate,'r') as templateFile:
-						print('//' + str(paraDict),file=f) # Adding parameters to top of file
-						for line in templateFile.readlines():
-							g = re.search(r'{{(\w+)}}',line)
-							if g:
-								start = line[0:g.start()]
-								end = line[g.end():]
-								var = g.group(1)
-								print(start,paraDict[var],end,sep='',end='',file=f)
-							else:
-								print(line,end='',file=f)
+				geoFile = '//' + str(paraDict) + '\n'
+				with open(geoFileTemplate,'r') as templateFile:
+					for line in templateFile.readlines():
+						g = re.search(r'{{(\w+)}}',line)
+						if g:
+							start = line[0:g.start()]
+							end = line[g.end():]
+							var = g.group(1)
+							geoFile += (start + str(paraDict[var]) + end)
+						else:
+							geoFile += line
 
 				# Substitute value into yaml template 
-				with open(yamlFile,'w') as f:
-					with open(yamlFileTemplate,'r') as templateFile:
-						for line in templateFile.readlines():
-							g = re.search(r'{{(\w+)}}',line)
-							if g:
-								start = line[0:g.start()]
-								end = line[g.end():]
-								var = g.group(1)
-								print(start,paraDict[var],end,sep='',end='',file=f)
-							else:
-								print(line,end='',file=f)
+				yamlFile = ''
+				with open(yamlFileTemplate,'r') as templateFile:
+					for line in templateFile.readlines():
+						g = re.search(r'{{(\w+)}}',line)
+						if g:
+							start = line[0:g.start()]
+							end = line[g.end():]
+							var = g.group(1)
+							yamlFile += (start + str(paraDict[var]) + end)
+						else:
+							yamlFile += line
 
 				# Upload file to agave
 				location = user.username + '/input'
-				agaveRequestUploadFile(user.profile.accesstoken,geoFile,executionSystem,location)
-				agaveRequestUploadFile(user.profile.accesstoken,yamlFile,executionSystem,location)
+				agaveRequestUploadFile(user.profile.accesstoken,geoFile, geoFileName, executionSystem,location)
+				agaveRequestUploadFile(user.profile.accesstoken,yamlFile,yamlFileName,executionSystem,location)
 
-				# Delete files from server
-				if os.path.exists(geoFile):
-					os.remove(geoFile)
-				if os.path.exists(yamlFile):
-					os.remove(yamlFile)
+			# 	inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFile
+			# 	inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFile
+			# 	job['inputs'] = inputs
+			# 	print('==========JOB==========')
+			# 	print(job)
+			# 	with open(jobFileName, 'w') as outfile:  
+			# 		json.dump(job, outfile, indent=4)
 
-				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFile
-				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFile
-				job['inputs'] = inputs
-				print('==========JOB==========')
-				print(job)
-				with open(jobFileName, 'w') as outfile:  
-					json.dump(job, outfile, indent=4)
-
-				# Submit the job
-				time.sleep(10) # Pause time
-				response = agaveRequestSubmitJob(user.profile.accesstoken)
+			# 	# Submit the job
+			# 	time.sleep(10) # Pause time
+			# 	response = agaveRequestSubmitJob(user.profile.accesstoken)
 
 
-				if response['status'] == 'success':
-					jobids.append(response['result']['id'])
-					# Create entry for job
-					Job(name=name,jobid=response['result']['id'],user=user).save()
-				else:
-					failedJobs.append(response['message'])
+			# 	if response['status'] == 'success':
+			# 		jobids.append(response['result']['id'])
+			# 		# Create entry for job
+			# 		Job(name=name,jobid=response['result']['id'],user=user).save()
+			# 	else:
+			# 		failedJobs.append(response['message'])
 
-				# Pause time between jobs
-				for i in reversed(range(9)):
-					print('Time ' + str(i*10))
-					time.sleep(10)	
+			# 	# Pause time between jobs
+			# 	for i in reversed(range(9)):
+			# 		print('Time ' + str(i*10))
+			# 		time.sleep(10)	
 
-			if len(jobids) > 0:
-				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobids),jobids))
-			if len(failedJobs) > 0:
-				messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
+			# if len(jobids) > 0:
+			# 	messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobids),jobids))
+			# if len(failedJobs) > 0:
+			# 	messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
 
-			if os.path.exists(jobFileName):
-				os.remove(jobFileName)
-			if os.path.exists(geoFileTemplate):
-				os.remove(geoFileTemplate)
-			if os.path.exists(yamlFileTemplate):
-				os.remove(yamlFileTemplate)
+			# if os.path.exists(jobFileName):
+			# 	os.remove(jobFileName)
+			# if os.path.exists(geoFileTemplate):
+			# 	os.remove(geoFileTemplate)
+			# if os.path.exists(yamlFileTemplate):
+			# 	os.remove(yamlFileTemplate)
 
 			return redirect('vDefAgave-home')
 	else:
