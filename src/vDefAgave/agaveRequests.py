@@ -2,12 +2,12 @@ import requests
 from django.contrib.auth.models import User
 from datetime import timedelta 
 from django.utils import timezone
-import re
+import re, json
 
 # BASEURL = 'https://public.agaveapi.co/'
 BASEURL = 'https://api.tacc.utexas.edu/'
 
-def agaveRequestMetadataUpdate(token, jobIds, jobName):
+def agaveRequestMetadataUpdate(token,jobIds,jobName):
 	"""Update metadata
 	Agave equivalent: metadata-addupdate
 	"""
@@ -17,9 +17,12 @@ def agaveRequestMetadataUpdate(token, jobIds, jobName):
 	}
 	params = (('pretty', 'true'),)
 
-	jobIds = '["' + '","'.join(jobIds) + '"]'
-
-	data = '{"value": {"jobName": ' + jobName + '}}, "name": "vDef", "associationIds":' + jobIds + '}'
+	data = {
+				"value": {"jobName": jobName}, 
+				"name": "vDef", 
+				"associationIds": jobIds
+		   }
+	data = json.dumps(data)
 
 	response = requests.post(BASEURL + 'meta/v2/data/', 
 							 headers=headers, 

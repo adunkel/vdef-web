@@ -218,6 +218,7 @@ def submit(request):
 	archiveSystem = request.GET.get('archiveSystem','')
 	executionSystem = request.GET.get('executionSystem','')
 	user = request.user
+	token = user.profile.accesstoken
 
 	# Get parameters from templates
 	parameters = []
@@ -289,11 +290,9 @@ def submit(request):
 				space.append([int(x) for x in np.linspace(start=start, stop=end, num=num)])
 
 			# Iterate through all parameter combination and submit a job for each
-			jobids = []
+			jobIds = []
 			failedJobs = []
-			print(space)
 			for paraCombination in list(itertools.product(*space)):
-				print(paraCombination)
 				paraDict = dict(zip(parameters,paraCombination))
 
 				# Create name for geo and yaml file
@@ -330,8 +329,8 @@ def submit(request):
 
 				# Upload file to agave
 				location = user.username + '/input'
-				agaveRequestUploadFile(user.profile.accesstoken,geoFile, geoFileName, archiveSystem,location)
-				agaveRequestUploadFile(user.profile.accesstoken,yamlFile,yamlFileName,archiveSystem,location)
+				agaveRequestUploadFile(token,geoFile, geoFileName, archiveSystem,location)
+				agaveRequestUploadFile(token,yamlFile,yamlFileName,archiveSystem,location)
 
 				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFileName
 				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFileName
@@ -339,22 +338,25 @@ def submit(request):
 
 				# Submit the job
 				time.sleep(10) # Pause time
-				response = agaveRequestSubmitJob(user.profile.accesstoken,json.dumps(job))
+				response = agaveRequestSubmitJob(token,json.dumps(job))
 
 				if response['status'] == 'success':
-					jobids.append(response['result']['id'])
+					jobIds.append(response['result']['id'])
 					# Create entry for job
-					Job(name=name,jobid=response['result']['id'],user=user).save()
+					# Job(name=name,jobid=response['result']['id'],user=user).save()
 				else:
 					failedJobs.append(response['message'])
 
 				# Pause time between jobs
-				for i in reversed(range(9)):
-					print('Time ' + str(i*10))
-					time.sleep(10)	
+				# for i in reversed(range(9)):
+				# 	print('Time ' + str(i*10))
+				# 	time.sleep(10)	
 
-			if len(jobids) > 0:
-				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobids),jobids))
+			if len(jobIds) > 0:
+				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
+				request = agaveRequestMetadataUpdate(token,jobIds,name)
+				print('===request===')
+				print(request)
 			if len(failedJobs) > 0:
 				messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
 
