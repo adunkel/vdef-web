@@ -289,7 +289,6 @@ def submit(request):
 				space.append([int(x) for x in np.linspace(start=start, stop=end, num=num)])
 
 			# Iterate through all parameter combination and submit a job for each
-			jobFileName = 'job.txt'
 			jobids = []
 			failedJobs = []
 			print(space)
@@ -331,45 +330,39 @@ def submit(request):
 
 				# Upload file to agave
 				location = user.username + '/input'
-				agaveRequestUploadFile(user.profile.accesstoken,geoFile, geoFileName, executionSystem,location)
-				agaveRequestUploadFile(user.profile.accesstoken,yamlFile,yamlFileName,executionSystem,location)
+				agaveRequestUploadFile(user.profile.accesstoken,geoFile, geoFileName, archiveSystem,location)
+				agaveRequestUploadFile(user.profile.accesstoken,yamlFile,yamlFileName,archiveSystem,location)
 
-			# 	inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFile
-			# 	inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFile
-			# 	job['inputs'] = inputs
-			# 	print('==========JOB==========')
-			# 	print(job)
-			# 	with open(jobFileName, 'w') as outfile:  
-			# 		json.dump(job, outfile, indent=4)
+				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFileName
+				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFileName
+				job['inputs'] = inputs
 
-			# 	# Submit the job
-			# 	time.sleep(10) # Pause time
-			# 	response = agaveRequestSubmitJob(user.profile.accesstoken)
+				# Submit the job
+				time.sleep(10) # Pause time
+				response = agaveRequestSubmitJob(user.profile.accesstoken,json.dumps(job))
 
+				if response['status'] == 'success':
+					jobids.append(response['result']['id'])
+					# Create entry for job
+					Job(name=name,jobid=response['result']['id'],user=user).save()
+				else:
+					failedJobs.append(response['message'])
 
-			# 	if response['status'] == 'success':
-			# 		jobids.append(response['result']['id'])
-			# 		# Create entry for job
-			# 		Job(name=name,jobid=response['result']['id'],user=user).save()
-			# 	else:
-			# 		failedJobs.append(response['message'])
+				# Pause time between jobs
+				for i in reversed(range(9)):
+					print('Time ' + str(i*10))
+					time.sleep(10)	
 
-			# 	# Pause time between jobs
-			# 	for i in reversed(range(9)):
-			# 		print('Time ' + str(i*10))
-			# 		time.sleep(10)	
+			if len(jobids) > 0:
+				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobids),jobids))
+			if len(failedJobs) > 0:
+				messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
 
-			# if len(jobids) > 0:
-			# 	messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobids),jobids))
-			# if len(failedJobs) > 0:
-			# 	messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
-
-			# if os.path.exists(jobFileName):
-			# 	os.remove(jobFileName)
-			# if os.path.exists(geoFileTemplate):
-			# 	os.remove(geoFileTemplate)
-			# if os.path.exists(yamlFileTemplate):
-			# 	os.remove(yamlFileTemplate)
+			# Remove template files
+			if os.path.exists(geoFileTemplate):
+				os.remove(geoFileTemplate)
+			if os.path.exists(yamlFileTemplate):
+				os.remove(yamlFileTemplate)
 
 			return redirect('vDefAgave-home')
 	else:

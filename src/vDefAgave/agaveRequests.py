@@ -99,20 +99,23 @@ def agaveRequestSystemsList(token):
 							verify=False)
 	return response.json()
 
-def agaveRequestSubmitJob(token):
+def agaveRequestSubmitJob(token,data):
 	"""Submit a new job.
-	Agave equivalent: jobs-submit -F 'job.txt'
+	Agave equivalent: jobs-submit -F - <<< data
+	Note: the dict data needs to be in double quotes.
+	Use json.dumps(data) if needed
 	"""
-	headers = {'Authorization': 'Bearer ' + token}
-	params = (('pretty', 'true'),)
-	files = {
-		'fileToUpload': ('job.txt', open('job.txt', 'rb')),
+	headers = {
+		'Authorization': 'Bearer ' + token,
+		'Content-Type': 'application/json',
 	}
+	params = (('pretty', 'true'),)
+	data = data
 
 	response = requests.post(BASEURL + 'jobs/v2/', 
 							 headers=headers, 
 							 params=params, 
-							 files=files, 
+							 data=data, 
 							 verify=False)
 	print('==========RESPONSE==========')
 	print(response)
