@@ -7,7 +7,7 @@ import re, json
 # BASEURL = 'https://public.agaveapi.co/'
 BASEURL = 'https://api.tacc.utexas.edu/'
 
-def agaveRequestMetadataUpdate(token,jobIds,jobName):
+def agaveRequestMetadataUpdate(token,jobIds,jobName,templates,parameters,paraValues):
 	"""Update metadata
 	Agave equivalent: metadata-addupdate
 	"""
@@ -18,7 +18,12 @@ def agaveRequestMetadataUpdate(token,jobIds,jobName):
 	params = (('pretty', 'true'),)
 
 	data = {
-				"value": {"jobName": jobName}, 
+				"value": {
+					"jobName": jobName,
+					"templates": templates,
+					"parameters": parameters,
+					"paraValues": dict(zip(jobIds,paraValues))
+				}, 
 				"name": "vDef", 
 				"associationIds": jobIds
 		   }

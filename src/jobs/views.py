@@ -232,7 +232,7 @@ def submit(request):
 			g = re.search(r'{{(\w+)}}',line)
 			if g:
 				parameters.append(g.group(1))
-	parameters = set(parameters)
+	parameters = list(set(parameters))
 
 	if request.method == 'POST':
 		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters)
@@ -292,6 +292,7 @@ def submit(request):
 			# Iterate through all parameter combination and submit a job for each
 			jobIds = []
 			failedJobs = []
+			paraValues = []
 			for paraCombination in list(itertools.product(*space)):
 				paraDict = dict(zip(parameters,paraCombination))
 
@@ -341,20 +342,23 @@ def submit(request):
 				response = agaveRequestSubmitJob(token,json.dumps(job))
 
 				if response['status'] == 'success':
-					jobIds.append(response['result']['id'])
+					jobId = response['result']['id']
+					jobIds.append(jobId)
+					paraValues.append(paraDict)
 					# Create entry for job
 					# Job(name=name,jobid=response['result']['id'],user=user).save()
 				else:
 					failedJobs.append(response['message'])
 
 				# Pause time between jobs
-				# for i in reversed(range(9)):
-				# 	print('Time ' + str(i*10))
-				# 	time.sleep(10)	
+				for i in reversed(range(9)):
+					print('Time ' + str(i*10))
+					time.sleep(10)	
 
 			if len(jobIds) > 0:
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
-				request = agaveRequestMetadataUpdate(token,jobIds,name)
+				templates = [geoFileTemplate,yamlFileTemplate]
+				request = agaveRequestMetadataUpdate(token,jobIds,name,templates,parameters,paraValues)
 				print('===request===')
 				print(request)
 			if len(failedJobs) > 0:
