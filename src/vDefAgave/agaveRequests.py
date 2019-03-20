@@ -7,6 +7,27 @@ import re, json
 # BASEURL = 'https://public.agaveapi.co/'
 BASEURL = 'https://api.tacc.utexas.edu/'
 
+def agaveRequestMetadataList(token):
+	"""List metadata
+	Agave equivalent: metadata-list
+	"""
+	headers = {'Authorization': 'Bearer ' + token,}
+
+	q = {"name":"vDef"}
+	q = json.dumps(q)
+
+	params = (
+		('q', q),
+	    ('pretty', 'true'),
+	)
+
+	response = requests.get(BASEURL + 'meta/v2/data/', 
+							headers=headers, 
+							params=params, 
+							verify=False)
+
+	return response.json()
+
 def agaveRequestMetadataUpdate(token,jobIds,jobName,templates,parameters,paraValues):
 	"""Update metadata
 	Agave equivalent: metadata-addupdate

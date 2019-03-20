@@ -359,8 +359,6 @@ def submit(request):
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
 				templates = [geoFileTemplate,yamlFileTemplate]
 				request = agaveRequestMetadataUpdate(token,jobIds,name,templates,parameters,paraValues)
-				print('===request===')
-				print(request)
 			if len(failedJobs) > 0:
 				messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
 
