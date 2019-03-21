@@ -287,6 +287,7 @@ def agaveRequestRefreshToken(user):
 
 def checkAuth(user):
 	"""Refresh token and saves to user profile"""
+	user = User.objects.filter(username=user.username).first()
 	expiresAt = user.profile.expiresat
 	currentTime = timezone.now()
 	if expiresAt < currentTime:
