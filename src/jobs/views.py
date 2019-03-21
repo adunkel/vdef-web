@@ -126,10 +126,25 @@ def listJobs(request):
 	user = request.user
 	jobStatus = []
 
+	# Get list of jobs in db
+	jobNames = user.job_set.values_list('name', flat=True).distinct()
+	print(jobNames)
+
+	# Get metadata
+	response = agaveRequestMetadataList(user.profile.accesstoken)
+
+	# Add job if not in db
+	for metadata in response['result']:
+		value = metadata['value']
+		if 'jobName' in value:
+			if jobName not in value['jobName']:
+				for jobId in metadata['associationIds']:
+					Job(name=jobName,jobid=jobId,user=user).save()
+
 	# Get distinct job names in database by user
-	jobNames = user.job_set.values_list('name').distinct()
-	jobNames = [i for sub in jobNames for i in sub]
+	jobNames = user.job_set.values_list('name', flat=True).distinct()
 	for jobName in jobNames:
+		print(jobName)
 		response = {}
 		finished = True
 		jobs = Job.objects.filter(name=jobName)
