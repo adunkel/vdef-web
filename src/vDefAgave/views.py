@@ -11,7 +11,7 @@ def home(request):
 @login_required
 def apps(request):
 	user = request.user
-	response = agaveRequestAppsList(user.profile.accesstoken)
+	response = agaveRequestAppsList(user)
 	context = {
 		'response': response,
 		'title': 'Apps'
@@ -21,7 +21,7 @@ def apps(request):
 @login_required
 def systems(request):
 	user = request.user
-	response = agaveRequestSystemsList(user.profile.accesstoken)
+	response = agaveRequestSystemsList(user)
 	context = {
 		'response': response,
 		'title': 'Systems'

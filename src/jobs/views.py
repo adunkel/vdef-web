@@ -64,7 +64,7 @@ def getData(request,jobName):
 				jobResponse = agaveRequestJobSearch(user.profile.accesstoken,jobId=job.jobid)
 				fileName = job.jobid + fileEnding
 				path = jobResponse['result'][0]['_links']['archiveData']['href']
-				fileResponse = agaveRequestGetFile(user.profile.accesstoken,path,fileName)
+				fileResponse = agaveRequestGetFile(user,path,fileName)
 				print(fileResponse.content)
 				pointData = json.loads(fileResponse.text)
 				# Determine parameter names and order
@@ -112,7 +112,7 @@ def getData(request,jobName):
 @login_required
 def output(request,jobId):
 	user = request.user
-	response = agaveRequestJobsOutputList(user.profile.accesstoken,jobId)
+	response = agaveRequestJobsOutputList(user,jobId)
 	print(response)
 	context = {
 		'jobId': jobId,
@@ -128,30 +128,28 @@ def listJobs(request):
 
 	# Get list of jobs in db
 	jobNames = user.job_set.values_list('name', flat=True).distinct()
-	print(jobNames)
 
 	# Get metadata
-	response = agaveRequestMetadataList(user.profile.accesstoken)
+	response = agaveRequestMetadataList(user)
 
 	# Add job if not in db
 	for metadata in response['result']:
 		value = metadata['value']
 		if 'jobName' in value:
-			if jobName not in value['jobName']:
+			if value['jobName'] not in jobNames:
 				for jobId in metadata['associationIds']:
 					Job(name=jobName,jobid=jobId,user=user).save()
 
 	# Get distinct job names in database by user
 	jobNames = user.job_set.values_list('name', flat=True).distinct()
 	for jobName in jobNames:
-		print(jobName)
 		response = {}
 		finished = True
 		jobs = Job.objects.filter(name=jobName)
 		for job in jobs:
 			# If status is not finished in db, get current status
 			if job.status != 'FINISHED':
-				response = agaveRequestJobSearch(user.profile.accesstoken,jobId=job.jobid)
+				response = agaveRequestJobSearch(user,jobId=job.jobid)
 				status = response['result'][0]['status']
 				job.status = status
 				job.save()
@@ -179,11 +177,11 @@ def setup(request):
 	user = request.user
 
 	# Get application parameter details
-	response = agaveRequestAppDetails(user.profile.accesstoken,appId)
+	response = agaveRequestAppDetails(user,appId)
 	inputs = response['result']['inputs']
 
 	# Get system option
-	response = agaveRequestSystemsList(user.profile.accesstoken)
+	response = agaveRequestSystemsList(user)
 	availableSystems = response['result']
 
 	if request.method == 'POST':
@@ -345,8 +343,8 @@ def submit(request):
 
 				# Upload file to agave
 				location = user.username + '/input'
-				agaveRequestUploadFile(token,geoFile, geoFileName, archiveSystem,location)
-				agaveRequestUploadFile(token,yamlFile,yamlFileName,archiveSystem,location)
+				agaveRequestUploadFile(user,geoFile, geoFileName, archiveSystem,location)
+				agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
 
 				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFileName
 				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFileName
@@ -354,7 +352,7 @@ def submit(request):
 
 				# Submit the job
 				time.sleep(10) # Pause time
-				response = agaveRequestSubmitJob(token,json.dumps(job))
+				response = agaveRequestSubmitJob(user,json.dumps(job))
 
 				if response['status'] == 'success':
 					jobId = response['result']['id']
@@ -373,7 +371,7 @@ def submit(request):
 			if len(jobIds) > 0:
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
 				templates = [geoFileTemplate,yamlFileTemplate]
-				request = agaveRequestMetadataUpdate(token,jobIds,name,templates,parameters,paraValues)
+				request = agaveRequestMetadataUpdate(user,jobIds,name,templates,parameters,paraValues)
 			if len(failedJobs) > 0:
 				messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
 

@@ -7,10 +7,13 @@ import re, json
 # BASEURL = 'https://public.agaveapi.co/'
 BASEURL = 'https://api.tacc.utexas.edu/'
 
-def agaveRequestMetadataList(token):
+def agaveRequestMetadataList(user):
 	"""List metadata
 	Agave equivalent: metadata-list
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {'Authorization': 'Bearer ' + token,}
 
 	q = {"name":"vDef"}
@@ -28,10 +31,13 @@ def agaveRequestMetadataList(token):
 
 	return response.json()
 
-def agaveRequestMetadataUpdate(token,jobIds,jobName,templates,parameters,paraValues):
+def agaveRequestMetadataUpdate(user,jobIds,jobName,templates,parameters,paraValues):
 	"""Update metadata
 	Agave equivalent: metadata-addupdate
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {
 		'Authorization': 'Bearer ' + token,
 		'Content-Type': 'application/json',
@@ -57,10 +63,13 @@ def agaveRequestMetadataUpdate(token,jobIds,jobName,templates,parameters,paraVal
 							 verify=False)
 	return response.json()
 
-def agaveRequestUploadFile(token,data,fileName,system,location):
+def agaveRequestUploadFile(user,data,fileName,system,location):
 	"""Uploads a file to system with location
 	Agave equivalent: jobs-upload -F - <<< data -S system location
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {'Authorization': 'Bearer ' + token}
 	params = (('pretty', 'true'),)
 	files = {
@@ -75,7 +84,10 @@ def agaveRequestUploadFile(token,data,fileName,system,location):
 							 verify=False)
 	return response.json()
 
-def agaveRequestGetFile(token,path,fileName):
+def agaveRequestGetFile(user,path,fileName):
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {'Authorization': 'Bearer ' + token}
 	path = re.sub('listings','media',path)
 
@@ -85,10 +97,13 @@ def agaveRequestGetFile(token,path,fileName):
 							verify=False)
 	return response
 
-def agaveRequestJobSearch(token,jobName='',jobId=''):
+def agaveRequestJobSearch(user,jobName='',jobId=''):
 	"""Searches for all jobs with the name jobName.
 	Agave equivalent: jobs-search 'name=jobName'
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {'Authorization': 'Bearer ' + token}
 	# params = (('pretty', 'true'),)
 	if jobName:
@@ -102,13 +117,15 @@ def agaveRequestJobSearch(token,jobName='',jobId=''):
 							 verify=False)
 	return response.json()
 
-def agaveRequestJobsOutputList(token,jobId):
+def agaveRequestJobsOutputList(user,jobId):
 	"""List the output file of the given job.
 	Agave equivalent: jobs-output-list jobId
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {'Authorization': 'Bearer ' + token}
 	params = (('pretty', 'true'),)
-	print(jobId)
 
 	response = requests.get(BASEURL + 'jobs/v2/' + jobId + '/outputs/listings/', 
 							headers=headers, 
@@ -116,10 +133,13 @@ def agaveRequestJobsOutputList(token,jobId):
 							verify=False)
 	return response.json()
 
-def agaveRequestSystemsList(token):
+def agaveRequestSystemsList(user):
 	"""List available systems.
 	Agave equivalent: systems-list -V
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {'Authorization': 'Bearer ' + token}
 	params = (('pretty', 'true'),)
 	response = requests.get(BASEURL + 'systems/v2/', 
@@ -128,12 +148,15 @@ def agaveRequestSystemsList(token):
 							verify=False)
 	return response.json()
 
-def agaveRequestSubmitJob(token,data):
+def agaveRequestSubmitJob(user,data):
 	"""Submit a new job.
 	Agave equivalent: jobs-submit -F - <<< data
 	Note: the dict data needs to be in double quotes.
 	Use json.dumps(data) if needed
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {
 		'Authorization': 'Bearer ' + token,
 		'Content-Type': 'application/json',
@@ -150,10 +173,13 @@ def agaveRequestSubmitJob(token,data):
 	print(response)
 	return response.json()
 
-def agaveRequestAppDetails(token,appid):
+def agaveRequestAppDetails(user,appid):
 	"""Get the details of an application.
 	Agave equivalent: apps-list -V appid
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+
 	headers = {'Authorization': 'Bearer ' + token}
 	params = (('pretty', 'true'),)
 	response = requests.get(BASEURL + 'apps/v2/' + appid, 
@@ -162,10 +188,13 @@ def agaveRequestAppDetails(token,appid):
 							verify=False)
 	return response.json()
 
-def agaveRequestAppsList(token):
+def agaveRequestAppsList(user):
 	"""Lists all applications available to the user
 	Agave equivalent: apps-list
 	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+	
 	headers = {'Authorization': 'Bearer ' + token}
 	params = (('pretty', 'true'),)
 	response = requests.get(BASEURL + 'apps/v2', 
@@ -255,3 +284,19 @@ def agaveRequestRefreshToken(user):
 								verify=False, 
 								auth=(clientKey, clientSecret))
 	return response.json()
+
+def checkAuth(user):
+	"""Refresh token and saves to user profile"""
+	expiresAt = user.profile.expiresat
+	currentTime = timezone.now()
+	if expiresAt < currentTime:
+		response = agaveRequestRefreshToken(user)
+		user.profile.accesstoken = response['access_token']
+		user.profile.refreshtoken = response['refresh_token']
+		expiresIn = response['expires_in']
+		currentTime = timezone.now()
+		user.profile.expiresin = expiresIn
+		user.profile.timecreated = currentTime
+		user.profile.expiresat = currentTime + timedelta(seconds=expiresIn)
+		user.save()
+	return user
