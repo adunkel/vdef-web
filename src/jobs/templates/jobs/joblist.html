@@ -1,12 +1,14 @@
 {% extends "vDefAgave/base.html" %}
-{% load crispy_forms_tags %}
+
 {% block content %}
 	<article class="media content-section">
 		<div class="media-body">
 			<h3 class="article-title">Job List</h3>
 			{% for name,status in jobs.items %}
 				{% if status == 'FINISHED' %}
-					<a href="{% url 'jobs-chart' name %}">{{ name }} - {{ status }}</a><br>
+					<a href="{% url 'jobs-chart' name %}">{{ name }} - {{ status }}</a>
+					<button type="button" id="btn_refresh_{{ name }}">Refresh</button>
+					<br>
 				{% else %}
 					{{ name }} - {{ status }}<br>
 				{% endif %}
@@ -14,3 +16,26 @@
 		</div>
 	</article>
 {% endblock content %}
+
+<script>
+{% block jquery %}
+	{% for name,status in jobs.items %}
+		$("#btn_refresh_{{ name }}").click(function(){
+			var r = confirm("Are you sure you want to refresh the data of {{ name }}?")
+			if (r == true) {
+				$.ajax({
+					method: "GET",
+					url: '/data/delete/job/' + '{{ name }}',
+					success: function(data){
+						console.log('Deleted')
+					},
+					error: function(error_data){
+						console.log("error");
+						console.log(error_data);
+					}
+				})
+			}
+		})
+	{% endfor %}
+{% endblock jquery %}
+</script>

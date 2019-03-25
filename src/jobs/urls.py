@@ -11,5 +11,6 @@ urlpatterns = [
 	path('chart/<str:jobName>/', views.chart, name='jobs-chart'),
 	path('data/<str:jobName>/', views.getData, name='jobs-getData'),
 	path('data/update/color/<str:jobId>', views.updateColor, name='jobs-updateColor'),
+	path('data/delete/job/<str:jobName>/', views.deleteJob, name='jobs-delete'),
 	path('dataview/', views.dataView, name='jobs-dataview'),
 ]

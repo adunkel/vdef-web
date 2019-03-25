@@ -45,6 +45,19 @@ def updateColor(request,jobId):
 	return JsonResponse(data)
 
 @login_required
+def deleteJob(request,jobName):
+	user = request.user
+	jobs = user.job_set.filter(name=jobName)
+	jobIds = jobs.values_list('jobid', flat=True)
+	jobs.delete()
+	for jobId in jobIds:
+		Job(name=jobName,jobid=jobId,user=user).save()
+	data = {
+		'jobName': jobName
+	}
+	return JsonResponse(data)
+
+@login_required
 def getData(request,jobName):
 	colorDefinitions = {'red': ['193','46','12'],
 						'blue': ['63','11','193']}
@@ -61,7 +74,7 @@ def getData(request,jobName):
 		paraNames = []
 		for job in jobs:
 			if not job.value:
-				jobResponse = agaveRequestJobSearch(user.profile.accesstoken,jobId=job.jobid)
+				jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
 				fileName = job.jobid + fileEnding
 				path = jobResponse['result'][0]['_links']['archiveData']['href']
 				fileResponse = agaveRequestGetFile(user,path,fileName)
@@ -136,7 +149,8 @@ def listJobs(request):
 	for metadata in response['result']:
 		value = metadata['value']
 		if 'jobName' in value:
-			if value['jobName'] not in jobNames:
+			jobName = value['jobName']
+			if jobName not in jobNames:
 				for jobId in metadata['associationIds']:
 					Job(name=jobName,jobid=jobId,user=user).save()
 
