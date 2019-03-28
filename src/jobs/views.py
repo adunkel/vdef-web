@@ -45,7 +45,7 @@ def updateColor(request,jobId):
 	return JsonResponse(data)
 
 @login_required
-def deleteJob(request,jobName):
+def refresh(request,jobName):
 	user = request.user
 	jobs = user.job_set.filter(name=jobName)
 	jobIds = jobs.values_list('jobid', flat=True)

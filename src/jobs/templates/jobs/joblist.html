@@ -25,9 +25,9 @@
 			if (r == true) {
 				$.ajax({
 					method: "GET",
-					url: '/data/delete/job/' + '{{ name }}',
+					url: '/data/refresh/job/' + '{{ name }}',
 					success: function(data){
-						console.log('Deleted')
+						console.log('Refreshed')
 					},
 					error: function(error_data){
 						console.log("error");
