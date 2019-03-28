@@ -12,6 +12,7 @@ class Job(models.Model):
 	para1value = models.IntegerField(null=True, blank=True)
 	para2value = models.IntegerField(null=True, blank=True)
 	status = models.CharField(max_length=20, blank=True)
+	picture = models.ImageField(default='default.jpg', upload_to='job_pictures')
 
 	def __str__(self):
 		return '%s' % self.jobid
