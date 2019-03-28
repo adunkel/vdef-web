@@ -111,6 +111,7 @@ def getData(request,jobName):
 	backgroundColor = [re.sub(r'\)',',0.3)',color) for color in colors]
 
 	jobIds = [job.jobid for job in jobs]
+	pictures = [job.picture.url for job in jobs]
 	
 	data = {
 		'points': points,
@@ -118,7 +119,8 @@ def getData(request,jobName):
 		'borderColor': borderColor,
 		'colorDefinitions': colorDefinitions,
 		'axisLabels': paraNames,
-		'jobIds': jobIds
+		'jobIds': jobIds,
+		'pictures': pictures
 	}
 	return JsonResponse(data)
 

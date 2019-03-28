@@ -9,6 +9,7 @@
 	var axisLabels = [];
 	var colorDefinitions = [];
 	var jobIds = [];
+	var pictures = [];
 
 	$.ajax({
 		method: "GET",
@@ -20,6 +21,7 @@
 			colorDefinitions = data.colorDefinitions;
 			axisLabels = data.axisLabels;
 			jobIds = data.jobIds;
+			pictures = data.pictures;
 			setChart()
 		},
 		error: function(error_data){
@@ -36,6 +38,7 @@
 		custom: function(tooltipModel) {
 			// Tooltip Element
 			var tooltipEl = document.getElementById('chartjs-tooltip');
+			// console.log(tooltipEl)
 
 			// Hide if no tooltip
 			if (tooltipModel.opacity === 0) {
@@ -46,15 +49,25 @@
 				tooltipEl.style.opacity = 1;
 			}
 
-			// Set pitcture
-			var innerHtml = '<img src="https://www.math.lsu.edu//~bourdin//images/defectmechanics-effectivetoughness-1.png" style="max-height: 150px; width: auto;">';
-			tooltipEl.innerHTML = innerHtml;
+			if (tooltipModel.body) {
+				var bodyLines = tooltipModel.body[0].lines;
+				var point = bodyLines[0].match(/\d+/g).map(Number);
+				for (var i = 0; i < points.length; i++) {
+					if (points[i].x == point[0] && points[i].y == point[1] && points[i].r == point[2]) {break;}
+				}
+				console.log(pictures[i])
 
-			// Set position
-			tooltipEl.style.position = 'absolute';
-			tooltipEl.style.left = tooltipModel.caretX + 'px';
-			tooltipEl.style.top = tooltipModel.caretY + tooltipModel.height/2 + 'px';
-			// console.log(tooltipModel)
+				// Set pitcture
+				var innerHtml = '<img src="' + pictures[i] + '" style="max-height: 150px; width: auto;">';
+				console.log(innerHtml)
+				tooltipEl.innerHTML = innerHtml;
+
+				// Set position
+				tooltipEl.style.position = 'absolute';
+				tooltipEl.style.left = tooltipModel.caretX + 'px';
+				tooltipEl.style.top = tooltipModel.caretY + tooltipModel.height/2 + 'px';
+			}
+			// console.log(document.getElementById("myChart"))
 		}
 	}
 
