@@ -55,11 +55,9 @@
 				for (var i = 0; i < points.length; i++) {
 					if (points[i].x == point[0] && points[i].y == point[1] && points[i].r == point[2]) {break;}
 				}
-				console.log(pictures[i])
 
-				// Set pitcture
+				// Set picture
 				var innerHtml = '<img src="' + pictures[i] + '" style="max-height: 150px; width: auto;">';
-				console.log(innerHtml)
 				tooltipEl.innerHTML = innerHtml;
 
 				// Set position
@@ -67,10 +65,8 @@
 				tooltipEl.style.left = tooltipModel.caretX + 'px';
 				tooltipEl.style.top = tooltipModel.caretY + tooltipModel.height/2 + 'px';
 			}
-			// console.log(document.getElementById("myChart"))
 		}
 	}
-
 
 	function setChart(){
 		// Chart Options

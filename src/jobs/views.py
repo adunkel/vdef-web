@@ -64,6 +64,8 @@ def getData(request,jobName):
 	colors = []
 	points = []
 	fileEnding = '_chart.json'
+	mediaPath = './src/media/'
+	mediaFolder = 'job_pictures/'
 
 	user = request.user
 	jobs = user.job_set.filter(name=jobName)
@@ -76,9 +78,12 @@ def getData(request,jobName):
 			if not job.value:
 				jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
 				fileName = job.jobid + fileEnding
+				imageName = job.jobid + '.png'
 				path = jobResponse['result'][0]['_links']['archiveData']['href']
 				fileResponse = agaveRequestGetFile(user,path,fileName)
-				print(fileResponse.content)
+				imageResponse = agaveRequestGetFile(user,path,imageName)
+				with open(mediaPath + mediaFolder + imageName, 'wb') as f:
+					f.write(imageResponse.content)
 				pointData = json.loads(fileResponse.text)
 				# Determine parameter names and order
 				if not paraNames:
@@ -89,6 +94,7 @@ def getData(request,jobName):
 				job.para2name = paraNames[1]
 				job.para1value = pointData['parameter'][paraNames[0]]
 				job.para2value = pointData['parameter'][paraNames[1]]
+				job.picture = mediaFolder + imageName
 				job.save()				
 
 				time.sleep(5) # Pause time
