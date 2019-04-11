@@ -1,20 +1,25 @@
 {% extends "vDefAgave/base.html" %}
 
 {% block content %}
-	<article class="media content-section">
-		<div class="media-body">
-			<h3 class="article-title">Job List</h3>
-			{% for name,status in jobs.items %}
-				{% if status == 'FINISHED' %}
-					<a href="{% url 'jobs-chart' name %}">{{ name }} - {{ status }}</a>
-					<button type="button" id="btn_refresh_{{ name }}">Refresh</button>
-					<br>
-				{% else %}
-					{{ name }} - {{ status }}<br>
-				{% endif %}
-			{% endfor %}
-		</div>
-	</article>
+	<div class="row">
+		{% for name,status in jobs.items %}
+			<div class="col-md-4">
+				<article class="media content-section">
+					<div class="media-body">
+						<div class="article-metadata">
+							<small class="text-muted">{{ status }}</small>
+						</div>
+						{% if status == 'FINISHED' %}
+							<a href="{% url 'jobs-chart' name %}">{{ name }}</a>
+							<button type="button" class="btn btn-sm" id="btn_refresh_{{ name }}">Refresh</button>
+						{% else %}
+							{{ name }}<br>
+						{% endif %}
+					</div>
+				</article>
+			</div>
+		{% endfor %}
+	</div>
 {% endblock content %}
 
 <script>
