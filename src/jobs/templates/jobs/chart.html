@@ -153,7 +153,7 @@
 				var value = myChart.data.datasets[0].data[elementIndex];
 				$.ajax({
 					method: "GET",
-					url: '/joboutput/' + jobIds[elementIndex],
+					url: '/data/output/' + jobIds[elementIndex],
 					success: function(data){
 						var jobIdEl = document.getElementById('jobId');
 						jobIdEl.innerHTML = jobIds[elementIndex];
