@@ -70,36 +70,36 @@
 
 	function setChart(){
 		// Chart Options
-		var options = {
-			title: {
-				display: true,
-				text: 'Title'
-			},
-			legend:{
-				display: false
-			},
-			scales: {
-				yAxes: [{ 
-					scaleLabel: {
-						display: true,
-						labelString: axisLabels[0]
-					},
-					ticks: {
-						beginAtZero:true
-					}
-				}],
-				xAxes: [{ 
-					scaleLabel: {
-						display: true,
-						labelString: axisLabels[1]
-					},
-					ticks: {
-						beginAtZero:true
-					}
-				}]
-			},
-			tooltips: tooltips
-		};
+		// var options = {
+		// 	title: {
+		// 		display: true,
+		// 		text: 'Title'
+		// 	},
+		// 	legend:{
+		// 		display: false
+		// 	},
+		// 	scales: {
+		// 		yAxes: [{ 
+		// 			scaleLabel: {
+		// 				display: true,
+		// 				labelString: axisLabels[0]
+		// 			},
+		// 			ticks: {
+		// 				beginAtZero:true
+		// 			}
+		// 		}],
+		// 		xAxes: [{ 
+		// 			scaleLabel: {
+		// 				display: true,
+		// 				labelString: axisLabels[1]
+		// 			},
+		// 			ticks: {
+		// 				beginAtZero:true
+		// 			}
+		// 		}]
+		// 	},
+		// 	tooltips: tooltips
+		// };
 
 		// Setup Chart
 		var ctx = document.getElementById("myChart").getContext('2d');
@@ -149,21 +149,24 @@
 			if (activeElements.length > 0) {
 				var elementIndex = activeElements[0]._index;
 
-				// Redirect to dataview   
-				var value = myChart.data.datasets[0].data[elementIndex];
+				// Display data and output files
+				var jobIdEl = document.getElementById('jobId');
+				jobIdEl.innerHTML = jobIds[elementIndex];
+
+				var point = myChart.data.datasets[0].data[elementIndex];
+				var dataEl = document.getElementById('data');
+				dataEl.innerHTML = '(' + point.x.toString() + ',' + point.y.toString() + ',' + point.r.toString() + ')'
+
 				$.ajax({
 					method: "GET",
 					url: '/data/output/' + jobIds[elementIndex],
 					success: function(data){
-						var jobIdEl = document.getElementById('jobId');
-						jobIdEl.innerHTML = jobIds[elementIndex];
+						
 
 						var filesEl = document.getElementById('files');
-						console.log(filesEl)
-						// console.log(jobIdEl.innerHTML)
 						for (i in data.files) {
-							fileEl = '<a href="#">' + data.files[i] + '</a><br>'
-							filesEl.innerHTML += fileEl
+							fileEl = '<a href="#">' + data.files[i] + '</a><br>';
+							filesEl.innerHTML += fileEl;
 						}
 					},
 					error: function(error_data){
@@ -171,7 +174,6 @@
 						console.log(error_data);
 					}
 				})
-				// location.href="/dataview/?index=" + elementIndex + "&x=" + value.x + "&y=" + value.y + "&r=" + value.r
 
 				// // Get current color rgb values
 				// var currentColor = myChart.data.datasets[0].backgroundColor[elementIndex];
@@ -226,9 +228,10 @@
 			</div>
 			<div class="col-md-6">
 				<div class="article-metadata">
-					<small id="jobId" class="mr-2"></small>
+					<small id='data' class="mr-2"></small>
+					<small id="jobId" class="text-muted"></small>
 				</div>
-				<div id ="files"></div>
+				<div id="files"></div>
 			</div>
 		</div>
 	</div>
