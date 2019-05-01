@@ -115,7 +115,6 @@
 			options: {
 				title: {
 					display: true,
-					text: 'Title'
 				},
 				legend:{
 					display: false
@@ -151,46 +150,66 @@
 				var elementIndex = activeElements[0]._index;
 
 				// Redirect to dataview   
-				// var value = this.data.datasets[0].data[elementIndex];
-				// location.href="/dataview/?index=" + elementIndex + "&x=" + value.x + "&y=" + value.y + "&r=" + value.r
-
-				// Get current color rgb values
-				var currentColor = myChart.data.datasets[0].backgroundColor[elementIndex];
-				var g = currentColor.match(/\d+/g);
-				var rgb = [g[0],g[1],g[2]];
-
-				// Get current color name
-				var currentColorName = '';
-				for (var key in colorDefinitions) {
-					if (rgb[0] == colorDefinitions[key][0] && rgb[1] == colorDefinitions[key][1] && rgb[2] == colorDefinitions[key][2]) {
-						currentColorName = key;
-					}
-				}
-
-				// Get new color name
-				var newColorName = '';
-				if (currentColorName == 'blue') {
-					newColorName = 'red';
-				} else {
-					newColorName = 'blue'
-				}
-
-				// Change color
-				myChart.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(colorDefinitions[newColorName],',0.3)');
-				myChart.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(colorDefinitions[newColorName],')');
-				myChart.update();
-
+				var value = myChart.data.datasets[0].data[elementIndex];
 				$.ajax({
 					method: "GET",
-					url: '/data/update/color/' + jobIds[elementIndex] + '?color=' + newColorName,
+					url: '/joboutput/' + jobIds[elementIndex],
 					success: function(data){
-						console.log('Color changed')
+						var jobIdEl = document.getElementById('jobId');
+						jobIdEl.innerHTML = jobIds[elementIndex];
+
+						var filesEl = document.getElementById('files');
+						console.log(filesEl)
+						// console.log(jobIdEl.innerHTML)
+						for (i in data.files) {
+							fileEl = '<a href="#">' + data.files[i] + '</a><br>'
+							filesEl.innerHTML += fileEl
+						}
 					},
 					error: function(error_data){
 						console.log("error");
 						console.log(error_data);
 					}
 				})
+				// location.href="/dataview/?index=" + elementIndex + "&x=" + value.x + "&y=" + value.y + "&r=" + value.r
+
+				// // Get current color rgb values
+				// var currentColor = myChart.data.datasets[0].backgroundColor[elementIndex];
+				// var g = currentColor.match(/\d+/g);
+				// var rgb = [g[0],g[1],g[2]];
+
+				// // Get current color name
+				// var currentColorName = '';
+				// for (var key in colorDefinitions) {
+				// 	if (rgb[0] == colorDefinitions[key][0] && rgb[1] == colorDefinitions[key][1] && rgb[2] == colorDefinitions[key][2]) {
+				// 		currentColorName = key;
+				// 	}
+				// }
+
+				// // Get new color name
+				// var newColorName = '';
+				// if (currentColorName == 'blue') {
+				// 	newColorName = 'red';
+				// } else {
+				// 	newColorName = 'blue'
+				// }
+
+				// // Change color
+				// myChart.data.datasets[0].backgroundColor[elementIndex] = 'rgba('.concat(colorDefinitions[newColorName],',0.3)');
+				// myChart.data.datasets[0].borderColor[elementIndex] = 'rgb('.concat(colorDefinitions[newColorName],')');
+				// myChart.update();
+
+				// $.ajax({
+				// 	method: "GET",
+				// 	url: '/data/update/color/' + jobIds[elementIndex] + '?color=' + newColorName,
+				// 	success: function(data){
+				// 		console.log('Color changed')
+				// 	},
+				// 	error: function(error_data){
+				// 		console.log("error");
+				// 		console.log(error_data);
+				// 	}
+				// })
 			}
 		}
 	}
@@ -200,9 +219,17 @@
 {% block content %}
 	<div class="content-section">
 		<h1>{{ jobName }}</h1>
-		<div class="col-md-6">
-			<canvas id="myChart" width="400" height="400"></canvas>
-			<div id="chartjs-tooltip"></div>
+		<div class="row">
+			<div class="col-md-6">
+				<canvas id="myChart" width="400" height="400"></canvas>
+				<div id="chartjs-tooltip"></div>
+			</div>
+			<div class="col-md-6">
+				<div class="article-metadata">
+					<small id="jobId" class="mr-2"></small>
+				</div>
+				<div id ="files"></div>
+			</div>
 		</div>
 	</div>
 {% endblock content %}

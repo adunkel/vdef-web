@@ -55,7 +55,7 @@ class JobSetupForm(forms.Form):
 
 class JobSubmitForm(forms.Form):
 	name = forms.CharField(label='Job Name')
-	email = forms.EmailField(help_text='Email to receive notifications')
+	email = forms.EmailField(help_text='Email to receive notifications',required=False)
 
 	def __init__(self, *args, **kwargs):
 		parameters = kwargs.pop('parameters', 0)

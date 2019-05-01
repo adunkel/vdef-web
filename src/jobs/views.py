@@ -134,13 +134,15 @@ def getData(request,jobName):
 def output(request,jobId):
 	user = request.user
 	response = agaveRequestJobsOutputList(user,jobId)
-	print(response)
-	context = {
-		'jobId': jobId,
-		'output': response['result'],
-		'title': 'Job Output'
+	files = []
+	for file in response['result']:
+		files.append(file['name'])
+	print(files)
+	data = {
+		'files': files,
 	}
-	return render(request, 'jobs/joboutput.html', context)
+	# return render(request, 'jobs/joboutput.html', context)
+	return JsonResponse(data)
 
 @login_required
 def listJobs(request):
@@ -313,7 +315,7 @@ def submit(request):
 				'parameters': {},
 				'archive': archive,
 				'archiveSystem': archiveSystem,
-				'notifications': notifications
+				# 'notifications': notifications
 			}
 
 			# Prepare parameter space
@@ -373,7 +375,7 @@ def submit(request):
 				job['inputs'] = inputs
 
 				# Submit the job
-				time.sleep(10) # Pause time
+				# time.sleep(10) # Pause time
 				response = agaveRequestSubmitJob(user,json.dumps(job))
 
 				if response['status'] == 'success':
@@ -386,7 +388,7 @@ def submit(request):
 					failedJobs.append(response['message'])
 
 				# Pause time between jobs
-				for i in reversed(range(9)):
+				for i in reversed(range(1)):
 					print('Time ' + str(i*10))
 					time.sleep(10)	
 
