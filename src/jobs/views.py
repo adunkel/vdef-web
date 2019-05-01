@@ -131,15 +131,23 @@ def getData(request,jobName):
 	return JsonResponse(data)
 
 @login_required
+def getFile(request,jobId,fileName):
+	user = request.user
+	jobResponse = agaveRequestJobSearch(user,jobId=jobId)
+	path = jobResponse['result'][0]['_links']['archiveData']['href']
+	response = agaveRequestGetFile(user,path,fileName)
+	return HttpResponse(response.content)
+
+@login_required
 def output(request,jobId):
 	user = request.user
 	response = agaveRequestJobsOutputList(user,jobId)
 	files = []
 	for file in response['result']:
 		files.append(file['name'])
-	print(files)
 	data = {
 		'files': files,
+		'jobId': jobId,
 	}
 	# return render(request, 'jobs/joboutput.html', context)
 	return JsonResponse(data)

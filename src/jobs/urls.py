@@ -7,6 +7,7 @@ urlpatterns = [
 	path('jobsetup/', views.setup, name='jobs-setup'),
 	path('jobsubmit/', views.submit, name='jobs-submit'),
 	path('data/output/<str:jobId>/', views.output, name='jobs-output'),
+	path('data/output/<str:jobId>/<str:fileName>/', views.getFile, name='jobs-getFile'),
 	path('joblist/', views.listJobs, name='jobs-list'),
 	path('chart/<str:jobName>/', views.chart, name='jobs-chart'),
 	path('data/<str:jobName>/', views.getData, name='jobs-getData'),
