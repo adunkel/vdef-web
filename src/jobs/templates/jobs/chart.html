@@ -127,6 +127,7 @@
 					url: '/data/output/' + jobIds[elementIndex],
 					success: function(data){
 						var filesEl = document.getElementById('files');
+						filesEl.innerHTML = '';
 						for (i in data.files) {
 							fileEl = '<a href="/data/output/' + data.jobId + '/' + data.files[i] + '/">' + data.files[i] + '</a><br>';
 							filesEl.innerHTML += fileEl;
