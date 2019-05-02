@@ -301,3 +301,11 @@ def checkAuth(user):
 		user.profile.expiresat = currentTime + timedelta(seconds=expiresIn)
 		user.save()
 	return user
+
+def waitForIt(eventid,key):
+	params = (
+	    ('eventid', eventid),
+	    ('key', key),
+	)
+	response = requests.get('http://melete05.cct.lsu.edu/event', params=params)
+	return response

@@ -310,17 +310,12 @@ def submit(request):
 				'yamlFile': '',
 			}
 			archive = True
-			notification1 = {
-				'url':email,
-				'event':'FINISHED',
+			notificationURL = 'http://melete05.cct.lsu.edu/report?status=RUNNING&eventid='+appId+'&key='+user.username
+			notification = [{
+				'url':notificationURL,
+				'event':'RUNNING',
 				'persistent':'true'
-			}
-			notification2 = {
-				'url':email,
-				'event':'FAILED',
-				'persistent':'true'
-			}
-			notifications = [notification1, notification2]
+			}]
 			agaveParameters = {key: 0 for key in agaveParameters}
 
 			# Put everything into a dictionary
@@ -336,7 +331,7 @@ def submit(request):
 				'parameters': agaveParameters,
 				'archive': archive,
 				'archiveSystem': archiveSystem,
-				# 'notifications': notifications
+				'notifications': notification
 			}
 
 			# Prepare parameter space
@@ -353,6 +348,7 @@ def submit(request):
 			paraValues = []
 			for paraCombination in list(itertools.product(*space)):
 				paraDict = dict(zip(parameters,paraCombination))
+				print(paraDict)
 
 				# Substitute agave parameters
 				agaveParameters = {key: paraDict[key] for key in agaveParameters}
@@ -400,7 +396,7 @@ def submit(request):
 				job['inputs'] = inputs
 
 				# Submit the job
-				time.sleep(10) # Pause time
+				# time.sleep(10) # Pause time
 				response = agaveRequestSubmitJob(user,json.dumps(job))
 
 				if response['status'] == 'success':
@@ -412,10 +408,13 @@ def submit(request):
 				else:
 					failedJobs.append(response['message'])
 
+				print('===WAITING===')
+				waitResponse = waitForIt(appId,user.username)
+				print(waitResponse)
 				# Pause time between jobs
-				for i in reversed(range(10)):
-					print('Time ' + str(i*10))
-					time.sleep(10)
+				# for i in reversed(range(10)):
+				# 	print('Time ' + str(i*10))
+				# 	time.sleep(10)
 
 			if len(jobIds) > 0:
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
