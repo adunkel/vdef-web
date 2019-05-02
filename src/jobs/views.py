@@ -84,6 +84,8 @@ def getData(request,jobName):
 				imageResponse = agaveRequestGetFile(user,path,imageName)
 				with open(mediaPath + mediaFolder + imageName, 'wb') as f:
 					f.write(imageResponse.content)
+
+				print(fileResponse.text)
 				pointData = json.loads(fileResponse.text)
 				# Determine parameter names and order
 				if not paraNames:
@@ -180,7 +182,7 @@ def listJobs(request):
 		jobs = Job.objects.filter(name=jobName)
 		for job in jobs:
 			# If status is not finished in db, get current status
-			if job.status != 'FINISHED':
+			if job.status not in ['FINISHED','STOPPED','FAILED']:
 				response = agaveRequestJobSearch(user,jobId=job.jobid)
 				status = response['result'][0]['status']
 				job.status = status
@@ -190,7 +192,7 @@ def listJobs(request):
 					finished = False
 					break
 		if finished:
-			jobStatus.append('FINISHED')
+			jobStatus.append(job.status)
 		else:
 			jobStatus.append(status)
 
@@ -266,18 +268,28 @@ def submit(request):
 	token = user.profile.accesstoken
 
 	# Get parameters from templates
-	parameters = []
+	fileParameters = []
 	with open(geoFileTemplate,'r') as templateFile:
 		for line in templateFile.readlines():
 			g = re.search(r'{{(\w+)}}',line)
 			if g:
-				parameters.append(g.group(1))
+				fileParameters.append(g.group(1))
 	with open(yamlFileTemplate,'r') as templateFile:
 		for line in templateFile.readlines():
 			g = re.search(r'{{(\w+)}}',line)
 			if g:
-				parameters.append(g.group(1))
-	parameters = list(set(parameters))
+				fileParameters.append(g.group(1))
+	fileParameters = list(set(fileParameters))
+
+	# Get agave parameters
+	response = agaveRequestAppDetails(user,appId)
+	parametersResponse = response['result']['parameters']
+	agaveParameters = []
+	for p in parametersResponse:
+		if p['value']['type'] == 'number':
+			agaveParameters.append(p['id'])
+
+	parameters = fileParameters + agaveParameters
 
 	if request.method == 'POST':
 		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters)
@@ -290,9 +302,9 @@ def submit(request):
 			# Set other job values
 			appId = appId
 			batchQueue = 'CLUSTER'
-			maxRunTime = '00:10:00'
+			maxRunTime = '04:00:00'
 			nodeCount = 1
-			processorsPerNode = 1
+			processorsPerNode = 12
 			inputs = {
 				'geoFile': '',
 				'yamlFile': '',
@@ -309,6 +321,7 @@ def submit(request):
 				'persistent':'true'
 			}
 			notifications = [notification1, notification2]
+			agaveParameters = {key: 0 for key in agaveParameters}
 
 			# Put everything into a dictionary
 			job = {
@@ -320,7 +333,7 @@ def submit(request):
 				'nodeCount': nodeCount,
 				'processorsPerNode': processorsPerNode,
 				'inputs': inputs,
-				'parameters': {},
+				'parameters': agaveParameters,
 				'archive': archive,
 				'archiveSystem': archiveSystem,
 				# 'notifications': notifications
@@ -340,6 +353,10 @@ def submit(request):
 			paraValues = []
 			for paraCombination in list(itertools.product(*space)):
 				paraDict = dict(zip(parameters,paraCombination))
+
+				# Substitute agave parameters
+				agaveParameters = {key: paraDict[key] for key in agaveParameters}
+				job['parameters'] = agaveParameters
 
 				# Create name for geo and yaml file
 				templateSplit = geoFileTemplate.rsplit('.',1)
@@ -383,7 +400,7 @@ def submit(request):
 				job['inputs'] = inputs
 
 				# Submit the job
-				# time.sleep(10) # Pause time
+				time.sleep(10) # Pause time
 				response = agaveRequestSubmitJob(user,json.dumps(job))
 
 				if response['status'] == 'success':
@@ -396,9 +413,9 @@ def submit(request):
 					failedJobs.append(response['message'])
 
 				# Pause time between jobs
-				for i in reversed(range(1)):
+				for i in reversed(range(10)):
 					print('Time ' + str(i*10))
-					time.sleep(10)	
+					time.sleep(10)
 
 			if len(jobIds) > 0:
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
