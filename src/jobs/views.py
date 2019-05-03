@@ -310,11 +310,11 @@ def submit(request):
 				'yamlFile': '',
 			}
 			archive = True
-			notificationURL = 'http://melete05.cct.lsu.edu/report?status=RUNNING&eventid='+appId+'&key='+user.username
+			notificationURL = 'http://melete05.cct.lsu.edu/report?status=QUEUED&eventid='+appId+'&key='+user.username
 			notification = [{
 				'url':notificationURL,
-				'event':'RUNNING',
-				'persistent':'true'
+				'event':'QUEUED',
+				'persistent':False
 			}]
 			agaveParameters = {key: 0 for key in agaveParameters}
 
@@ -389,7 +389,9 @@ def submit(request):
 				# Upload file to agave
 				location = user.username + '/input'
 				agaveRequestUploadFile(user,geoFile, geoFileName, archiveSystem,location)
+				time.sleep(2) # Pause time
 				agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
+				time.sleep(2) # Pause time
 
 				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFileName
 				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFileName
@@ -399,18 +401,23 @@ def submit(request):
 				# time.sleep(10) # Pause time
 				response = agaveRequestSubmitJob(user,json.dumps(job))
 
+				while 'fault' in response: # Try again
+					time.sleep(5) # Pause time
+					response = agaveRequestSubmitJob(user,json.dumps(job))
+					print(response)
+
 				if response['status'] == 'success':
 					jobId = response['result']['id']
 					jobIds.append(jobId)
 					paraValues.append(paraDict)
-					# Create entry for job
-					# Job(name=name,jobid=response['result']['id'],user=user).save()
+
+					print('===WAITING===')
+					waitResponse = waitForIt(appId,user.username)
+					print(waitResponse.text)
 				else:
 					failedJobs.append(response['message'])
 
-				print('===WAITING===')
-				waitResponse = waitForIt(appId,user.username)
-				print(waitResponse)
+				time.sleep(5) # Pause time
 				# Pause time between jobs
 				# for i in reversed(range(10)):
 				# 	print('Time ' + str(i*10))
