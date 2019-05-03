@@ -27,7 +27,7 @@ def agaveRequestMetadataList(user):
 	response = requests.get(BASEURL + 'meta/v2/data/', 
 							headers=headers, 
 							params=params, 
-							verify=False)
+							verify=True)
 
 	return response.json()
 
@@ -60,7 +60,7 @@ def agaveRequestMetadataUpdate(user,jobIds,jobName,templates,parameters,paraValu
 							 headers=headers, 
 							 params=params, 
 							 data=data, 
-							 verify=False)
+							 verify=True)
 	return response.json()
 
 def agaveRequestUploadFile(user,data,fileName,system,location):
@@ -81,7 +81,9 @@ def agaveRequestUploadFile(user,data,fileName,system,location):
 							 headers=headers, 
 							 params=params, 
 							 files=files, 
-							 verify=False)
+							 verify=True)
+	print('===File Uploaded===')
+	print(response.json())
 	return response.json()
 
 def agaveRequestGetFile(user,path,fileName):
@@ -94,7 +96,7 @@ def agaveRequestGetFile(user,path,fileName):
 	link = path + '/' + fileName
 	response = requests.get(link, 
 							headers=headers, 
-							verify=False)
+							verify=True)
 	return response
 
 def agaveRequestJobSearch(user,jobName='',jobId=''):
@@ -114,7 +116,7 @@ def agaveRequestJobSearch(user,jobName='',jobId=''):
 	response = requests.get(BASEURL + 'jobs/v2', 
 							 headers=headers, 
 							 params=params,  
-							 verify=False)
+							 verify=True)
 	return response.json()
 
 def agaveRequestJobsOutputList(user,jobId):
@@ -130,7 +132,7 @@ def agaveRequestJobsOutputList(user,jobId):
 	response = requests.get(BASEURL + 'jobs/v2/' + jobId + '/outputs/listings/', 
 							headers=headers, 
 							params=params, 
-							verify=False)
+							verify=True)
 	return response.json()
 
 def agaveRequestSystemsList(user):
@@ -145,7 +147,7 @@ def agaveRequestSystemsList(user):
 	response = requests.get(BASEURL + 'systems/v2/', 
 							headers=headers, 
 							params=params, 
-							verify=False)
+							verify=True)
 	return response.json()
 
 def agaveRequestSubmitJob(user,data):
@@ -168,9 +170,10 @@ def agaveRequestSubmitJob(user,data):
 							 headers=headers, 
 							 params=params, 
 							 data=data, 
-							 verify=False)
-	print('==========RESPONSE==========')
+							 verify=True)
+	print('===Job Submitted===')
 	print(response)
+	print(response.json())
 	return response.json()
 
 def agaveRequestAppDetails(user,appid):
@@ -185,7 +188,7 @@ def agaveRequestAppDetails(user,appid):
 	response = requests.get(BASEURL + 'apps/v2/' + appid, 
 							headers=headers, 
 							params=params, 
-							verify=False)
+							verify=True)
 	return response.json()
 
 def agaveRequestAppsList(user):
@@ -200,7 +203,7 @@ def agaveRequestAppsList(user):
 	response = requests.get(BASEURL + 'apps/v2', 
 							headers=headers, 
 							params=params, 
-							verify=False)
+							verify=True)
 	return response.json()
 
 def agaveRequestClientList(username, password, clientName='vDef'):
@@ -210,7 +213,7 @@ def agaveRequestClientList(username, password, clientName='vDef'):
 	params = (('pretty', 'true'),)
 	response = requests.get(BASEURL + 'clients/v2/' + clientName, 
 							params=params, 
-							verify=False, 
+							verify=True, 
 							auth=(username, password))
 	return response.json()
 
@@ -221,7 +224,7 @@ def agaveRequestClientDelete(username, password, clientName='vDef'):
 	params = (('pretty', 'true'),)
 	response = requests.delete(BASEURL + 'clients/v2/' + clientName, 
 								params=params, 
-								verify=False, 
+								verify=True, 
 								auth=(username, password))
 	return response.json()
 
@@ -239,7 +242,7 @@ def agaveRequestCreateClient(username, password, clientName='vDef'):
 	response = requests.post(BASEURL + 'clients/v2/', 
 								params=params, 
 								data=data, 
-								verify=False, 
+								verify=True, 
 								auth=(username, password))
 	return response.json()
 
@@ -259,7 +262,7 @@ def agaveRequestCreateToken(username, password, user):
 
 	response = requests.post(BASEURL + 'token', 
 								data=data, 
-								verify=False, 
+								verify=True, 
 								auth=(clientkey, clientsecret))
 	return response.json()
 
@@ -281,7 +284,7 @@ def agaveRequestRefreshToken(user):
 
 	response = requests.post(BASEURL + 'token', 
 								headers=headers, data=data, 
-								verify=False, 
+								verify=True, 
 								auth=(clientKey, clientSecret))
 	return response.json()
 
@@ -306,6 +309,7 @@ def waitForIt(eventid,key):
 	params = (
 	    ('eventid', eventid),
 	    ('key', key),
+	    ('tmout', '120'),
 	)
 	response = requests.get('http://melete05.cct.lsu.edu/event', params=params)
 	return response
