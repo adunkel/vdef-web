@@ -77,12 +77,18 @@ def agaveRequestUploadFile(user,data,fileName,system,location):
 		'fileName': (None, fileName),
 	}
 
-	response = requests.post(BASEURL + 'files/v2/media/system/' + system + '/' + location, 
-							 headers=headers, 
-							 params=params, 
-							 files=files, 
-							 verify=True)
 	print('===File Uploaded===')
+	response = None
+	while response is None:
+		try:
+			response = requests.post(BASEURL + 'files/v2/media/system/' + system + '/' + location, 
+									 headers=headers, 
+									 params=params, 
+									 files=files, 
+									 verify=True)
+		except:
+			print('===Error===')
+	
 	print(response.json())
 	return response.json()
 
@@ -94,9 +100,14 @@ def agaveRequestGetFile(user,path,fileName):
 	path = re.sub('listings','media',path)
 
 	link = path + '/' + fileName
-	response = requests.get(link, 
-							headers=headers, 
-							verify=True)
+	response = None
+	while response is None:
+		try:
+			response = requests.get(link, 
+									headers=headers, 
+									verify=True)
+		except:
+			print('===Error===')
 	return response
 
 def agaveRequestJobSearch(user,jobName='',jobId=''):
@@ -166,12 +177,18 @@ def agaveRequestSubmitJob(user,data):
 	params = (('pretty', 'true'),)
 	data = data
 
-	response = requests.post(BASEURL + 'jobs/v2/', 
-							 headers=headers, 
-							 params=params, 
-							 data=data, 
-							 verify=True)
+	response = None
 	print('===Job Submitted===')
+	while response is None:
+		try:
+			response = requests.post(BASEURL + 'jobs/v2/', 
+									 headers=headers, 
+									 params=params, 
+									 data=data, 
+									 verify=True)
+		except:
+			print('===Error===')
+	
 	print(response)
 	print(response.json())
 	return response.json()
@@ -288,6 +305,25 @@ def agaveRequestRefreshToken(user):
 								auth=(clientKey, clientSecret))
 	return response.json()
 
+def agaveRequestStopJob(user,jobId):
+	"""Stop a job
+	Avage equivalent: jobs-stop jobid
+	"""
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+	
+	headers = {'Authorization': 'Bearer ' + token}
+	params = (('pretty', 'true'),)
+	data = {'action': 'stop'}
+
+	response = requests.post(BASEURL + 'jobs/v2/' + jobId, 
+								headers=headers, 
+								params=params, 
+								data=data, 
+								verify=True)
+	print(response.json())
+	return response.json()
+
 def checkAuth(user):
 	"""Refresh token and saves to user profile"""
 	user = User.objects.filter(username=user.username).first()
@@ -312,4 +348,8 @@ def waitForIt(eventid,key):
 	    ('tmout', '120'),
 	)
 	response = requests.get('http://melete05.cct.lsu.edu/event', params=params)
-	return response
+	if response.text == '':
+		result = {eventid: None}
+	else:
+		result = response.json()
+	return result

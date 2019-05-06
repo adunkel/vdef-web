@@ -50,8 +50,8 @@ def refresh(request,jobName):
 	jobs = user.job_set.filter(name=jobName)
 	jobIds = jobs.values_list('jobid', flat=True)
 	jobs.delete()
-	for jobId in jobIds:
-		Job(name=jobName,jobid=jobId,user=user).save()
+	# for jobId in jobIds:
+	# 	Job(name=jobName,jobid=jobId,user=user).save()
 	data = {
 		'jobName': jobName
 	}
@@ -74,6 +74,10 @@ def getData(request,jobName):
 		# Download chart json and save to jobs model if needed
 		response = ''
 		paraNames = []
+
+		# Exclude jobs that did not finish
+		jobs = [job for job in jobs if job.status == 'FINISHED']
+
 		for job in jobs:
 			if not job.value:
 				jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
@@ -99,10 +103,13 @@ def getData(request,jobName):
 				job.picture = mediaFolder + imageName
 				job.save()				
 
-				time.sleep(5) # Pause time
+				time.sleep(2) # Pause time
 
 		# Prepare data
 		jobs = user.job_set.filter(name=jobName)
+		# Exclude jobs that did not finish
+		jobs = [job for job in jobs if job.status == 'FINISHED']
+
 		for job in jobs:
 			if not paraNames:
 				paraNames = [job.para1name,job.para2name]
@@ -178,23 +185,30 @@ def listJobs(request):
 	jobNames = user.job_set.values_list('name', flat=True).distinct()
 	for jobName in jobNames:
 		response = {}
-		finished = True
+		finished = 0
+		failed = 0
 		jobs = Job.objects.filter(name=jobName)
+		print('===')
+		print(jobName)
 		for job in jobs:
 			# If status is not finished in db, get current status
+			print(job.status)
 			if job.status not in ['FINISHED','STOPPED','FAILED']:
 				response = agaveRequestJobSearch(user,jobId=job.jobid)
 				status = response['result'][0]['status']
 				job.status = status
 				job.save()
-				if status != 'FINISHED':
+				if status in ['FINISHED','STOPPED','FAILED']:
+					finished += 1
+				elif status in ['STOPPED','FAILED']:
+					failed += 1
+				else:
 					# break if one subjob is not finished
-					finished = False
 					break
-		if finished:
-			jobStatus.append(job.status)
+		if (finished+failed) == len(jobs) and finished > 0:
+			jobStatus.append('FINISHED')
 		else:
-			jobStatus.append(status)
+			jobStatus.append(job.status)
 
 	# Create jobname:status dictionary
 	jobs = dict(zip(jobNames,jobStatus))
@@ -349,6 +363,7 @@ def submit(request):
 			for paraCombination in list(itertools.product(*space)):
 				paraDict = dict(zip(parameters,paraCombination))
 				print(paraDict)
+				paraValues.append(paraDict)#######!!!!!!!!!!!!!!
 
 				# Substitute agave parameters
 				agaveParameters = {key: paraDict[key] for key in agaveParameters}
@@ -391,33 +406,37 @@ def submit(request):
 				agaveRequestUploadFile(user,geoFile, geoFileName, archiveSystem,location)
 				time.sleep(2) # Pause time
 				agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
-				time.sleep(2) # Pause time
 
 				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFileName
 				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFileName
 				job['inputs'] = inputs
 
 				# Submit the job
-				# time.sleep(10) # Pause time
-				response = agaveRequestSubmitJob(user,json.dumps(job))
-
-				while 'fault' in response: # Try again
+				response = {'fault': True}
+				waitResponse = {appId: None}
+				attempts = 1
+				while (('fault' in response) or (waitResponse[appId] == None)) and attempts <= 3:
 					time.sleep(5) # Pause time
 					response = agaveRequestSubmitJob(user,json.dumps(job))
-					print(response)
 
-				if response['status'] == 'success':
-					jobId = response['result']['id']
-					jobIds.append(jobId)
-					paraValues.append(paraDict)
+					if 'status' in response:
+						if response['status'] == 'success':
+							jobId = response['result']['id']
+							
+							print('===WAITING===')
+							waitResponse = waitForIt(appId,user.username)
+							print(waitResponse)
+							if waitResponse[appId] == None:
+								agaveRequestStopJob(user,jobId)
+							else:
+								jobIds.append(jobId)
+								paraValues.append(paraDict)
+								# exit while loop
+						else:
+							failedJobs.append(response['message'])
+					attempts += 1
 
-					print('===WAITING===')
-					waitResponse = waitForIt(appId,user.username)
-					print(waitResponse.text)
-				else:
-					failedJobs.append(response['message'])
-
-				time.sleep(5) # Pause time
+				time.sleep(10) # Pause time
 				# Pause time between jobs
 				# for i in reversed(range(10)):
 				# 	print('Time ' + str(i*10))
@@ -427,6 +446,7 @@ def submit(request):
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
 				templates = [geoFileTemplate,yamlFileTemplate]
 				request = agaveRequestMetadataUpdate(user,jobIds,name,templates,parameters,paraValues)
+				print(request)
 			if len(failedJobs) > 0:
 				messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
 
