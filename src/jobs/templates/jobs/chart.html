@@ -57,7 +57,7 @@
 				}
 
 				// Set picture
-				var innerHtml = '<img src="' + pictures[i] + '" style="max-height: 150px; width: auto;">';
+				var innerHtml = '<img src="' + pictures[i] + '" style="max-height: 200px; width: auto;">';
 				tooltipEl.innerHTML = innerHtml;
 
 				// Set position
@@ -88,19 +88,21 @@
 					yAxes: [{ 
 						scaleLabel: {
 							display: true,
-							labelString: axisLabels[0]
+							labelString: axisLabels[1]
 						},
 						ticks: {
-							beginAtZero:true
+							min: Math.min.apply(null, points.map(function(item) {return item.y;})) - 2,
+							max: Math.max.apply(null, points.map(function(item) {return item.y;})) + 2,
 						}
 					}],
 					xAxes: [{ 
 						scaleLabel: {
 							display: true,
-							labelString: axisLabels[1]
+							labelString: axisLabels[0]
 						},
 						ticks: {
-							beginAtZero:true
+							min: Math.min.apply(null, points.map(function(item) {return item.x;})) - 2,
+							max: Math.max.apply(null, points.map(function(item) {return item.x;})) + 2,
 						}
 					}]
 				},

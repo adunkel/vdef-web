@@ -456,7 +456,7 @@ def submit(request):
 			if os.path.exists(yamlFileTemplate):
 				os.remove(yamlFileTemplate)
 
-			return redirect('vDefAgave-home')
+			return redirect('jobs-list')
 	else:
 		form = JobSubmitForm(parameters=parameters)
 

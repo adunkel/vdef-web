@@ -13,22 +13,21 @@
 	<link rel="stylesheet" type="text/css" href="{% static 'vDefAgave/main.css' %}">
 
 	{% if title %}
-	<title>vDefAgave | {{ title }}</title>
+	<title>vDef Web | {{ title }}</title>
 	{% else %}
-	<title>vDefAgave</title>
+	<title>vDef Web</title>
 	{% endif %}
 </head>
 <body>
 	<header class="site-header">
 		<nav class="navbar navbar-expand-md navbar-dark bg-lsu-purple fixed-top">
 			<div class="container">
-				<a class="navbar-brand mr-4" href="{% url 'vDefAgave-home' %}">vDefAgave</a>
+				<a class="navbar-brand mr-4" href="{% url 'vDefAgave-home' %}">vDef Web</a>
 				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
 				</button>
 				<div class="collapse navbar-collapse" id="navbarToggle">
 					<div class="navbar-nav mr-auto">
-						<a class="nav-item nav-link" href="{% url 'vDefAgave-home' %}">Home</a>
 						{% if user.is_authenticated %}
 						<a class="nav-item nav-link" href="{% url 'vDefAgave-apps' %}">Applications</a>
 						<a class="nav-item nav-link" href="{% url 'vDefAgave-systems' %}">Systems</a>
@@ -38,7 +37,6 @@
 					<!-- Navbar Right Side -->
 					<div class="navbar-nav">
 						{% if user.is_authenticated %}
-						<a class="nav-item nav-link" href="{% url 'profile' %}">Profile</a>
 						<a class="nav-item nav-link" href="{% url 'logout' %}">Logout</a>
 						{% else %}
 						<a class="nav-item nav-link" href="{% url 'login' %}">Login</a>
