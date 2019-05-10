@@ -316,7 +316,7 @@ def submit(request):
 			# Set other job values
 			appId = appId
 			batchQueue = 'CLUSTER'
-			maxRunTime = '04:00:00'
+			maxRunTime = '08:00:00'
 			nodeCount = 1
 			processorsPerNode = 12
 			inputs = {

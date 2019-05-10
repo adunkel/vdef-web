@@ -1,15 +1,58 @@
 {% extends "vDefAgave/base.html" %}
+{% load crispy_forms_tags %}
 {% block content %}
-	{% for app in response.result %}
+	<form enctype="multipart/form-data" method="POST">
+		{% crispy form %}
+	</form>
 	<article class="media content-section">
 		<div class="media-body">
 			<div class="article-metadata">
-				<small class="mr-2">{{ app.id }}</small>
-				<small class="text-muted">{{ app.lastModified }}</small>
+				<small id="appId" class="mr-2"></small>
+				<small id="lastModified" class="text-muted"></small>
 			</div>
-			<h3><a class="article-title" href="{% url 'jobs-setup' %}?appId={{app.id}}">{{ app.label }}</a></h3>
-			<p class="article-content">{{ app.shortDescription }}</p>
+			<h3><a id="label" class="article-title" href="{% url 'jobs-setup' %}?appId=appid"></a></h3>
+			<p id="description" class="article-content"></p>
 		</div>
 	</article>
-	{% endfor %}
 {% endblock content %}
+
+<script type="text/javascript">
+{% block jquery %}
+	$("select").change(function(){
+		var apps = '{{ response.result }}';
+		apps = apps.replace(/&#39;/g, '"').replace(/False/g, false).replace(/True/g, true).replace(/None/g, null);
+		apps = JSON.parse(apps);
+
+		var appsEl = document.getElementById("id_apps");
+		var appId = appsEl.options[appsEl.selectedIndex].value;
+
+		var app = apps.find(function(element) {
+			return element['id'] == appId;
+		});
+
+		var appIdEl = document.getElementById('appId');
+		appIdEl.innerHTML = appId;
+
+		var lastModified = new Date(app['lastModified']);
+		var YYYY = lastModified.getFullYear();
+		var MM = lastModified.getMonth() + 1;
+		var DD = lastModified.getDate();
+		var hh = lastModified.getHours();
+		var mm = lastModified.getMinutes();
+		var ss = lastModified.getSeconds();
+		var lastModifiedEl = document.getElementById('lastModified');
+		lastModifiedEl.innerHTML = `${MM}-${DD}-${YYYY} ${hh}:${mm}:${ss}`;
+
+		var labelEl = document.getElementById('label');
+		labelEl.innerHTML = app['label'];
+		var labelhref = labelEl.href;
+		labelEl.href = labelhref.substring(0,labelhref.lastIndexOf('=')+1) + appId;
+
+		var descriptionEl = document.getElementById('description');
+		descriptionEl.innerHTML = app['shortDescription'];
+		// var El = document.getElementById('');
+		// El.innerHTML = app[''];
+
+  });
+{% endblock %}
+</script>

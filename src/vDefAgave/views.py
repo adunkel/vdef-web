@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 import requests
 from .agaveRequests import agaveRequestAppsList, agaveRequestSystemsList
+from .forms import AppsDropdownForm
 
 
 def home(request):
@@ -12,7 +13,12 @@ def home(request):
 def apps(request):
 	user = request.user
 	response = agaveRequestAppsList(user)
+
+	apps = response['result']
+
+	form = AppsDropdownForm(apps=apps)
 	context = {
+		'form': form,
 		'response': response,
 		'title': 'Apps'
 	}
