@@ -5,4 +5,6 @@ urlpatterns = [
 	path('', views.home, name='vDefAgave-home'),
 	path('apps/', views.apps, name='vDefAgave-apps'),
 	path('systems/', views.systems, name='vDefAgave-systems'),
+	path('apps/pems/<str:appId>/', views.appPemsList, name='vDefAgave-appPems'),
+	path('apps/pems/<str:appId>/<str:updateUser>', views.appPemsUpdate, name='vDefAgave-appPemsUpdate'),
 ]

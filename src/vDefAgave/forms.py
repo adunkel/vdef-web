@@ -15,4 +15,11 @@ class AppsDropdownForm(forms.Form):
 
 		self.fields['apps'] = forms.ChoiceField(label='', choices=appChoices, required=False)
 		self.helper = FormHelper(self)
-		self.helper.layout = Layout('apps')
+
+class AppsGrantPermission(forms.Form):
+	updateUser = forms.CharField(label='')
+	def __init__(self, *args, **kwargs):
+		super(AppsGrantPermission, self).__init__(*args, **kwargs)
+
+		self.helper = FormHelper(self)
+		self.helper.layout = Layout('updateUser')

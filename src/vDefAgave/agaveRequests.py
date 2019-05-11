@@ -7,9 +7,64 @@ import re, json
 # BASEURL = 'https://public.agaveapi.co/'
 BASEURL = 'https://api.tacc.utexas.edu/'
 
+def agaveRequestCommon(user):
+	user = checkAuth(user)
+	token = user.profile.accesstoken
+	headers = {'Authorization': 'Bearer ' + token,}
+	params = (('pretty', 'true'),)
+	return token,headers,params
+
+def agaveRequestGet(urlExt, headers, params):
+	response = None
+	attempts = 1
+	while response is None and attempts <= 3:
+		try:
+			response = requests.get(BASEURL + urlExt, 
+									 headers=headers, 
+									 params=params, 
+									 verify=True)
+		except:
+			print('Agave request error. Attempt', attempts)
+	return response
+
+def agaveRequestPost(urlExt, headers, params, data):
+	response = None
+	attempts = 1
+	while response is None and attempts <= 3:
+		try:
+			response = requests.post(BASEURL + urlExt, 
+									 headers=headers, 
+									 params=params, 
+									 data=data,
+									 verify=True)
+		except:
+			print('Agave request error. Attempt', attempts)
+	return response
+
+def agaveRequestAppsPemsUpdate(user,appId,updateUser):
+	"""Gives updateUser permission for appId
+	Agave CLI: apps-pems-update -u updateUser -p ALL appId
+	"""
+	token,headers,params = agaveRequestCommon(user)
+	urlExt = 'apps/v2/' + appId + '/pems/' + updateUser
+	data = {'permission': 'ALL'}
+	response = agaveRequestPost(urlExt=urlExt, headers=headers, params=params, data=data)
+	print(response.json())
+	return response.json()
+
+def agaveRequestAppPemsList(user,appId):
+	"""Lists permission of app
+	Agave CLI: apps-pems-list appId
+	"""
+	token,headers,params = agaveRequestCommon(user)
+	urlExt = 'apps/v2/' + appId + '/pems/'
+	response = agaveRequestGet(urlExt=urlExt, headers=headers, params=params)
+	return response.json()
+
+
 def agaveRequestMetadataList(user):
 	"""List metadata
-	Agave equivalent: metadata-list
+	Agave CLI: metadata-list
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -33,7 +88,7 @@ def agaveRequestMetadataList(user):
 
 def agaveRequestMetadataUpdate(user,jobIds,jobName,templates,parameters,paraValues):
 	"""Update metadata
-	Agave equivalent: metadata-addupdate
+	Agave CLI: metadata-addupdate
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -65,7 +120,7 @@ def agaveRequestMetadataUpdate(user,jobIds,jobName,templates,parameters,paraValu
 
 def agaveRequestUploadFile(user,data,fileName,system,location):
 	"""Uploads a file to system with location
-	Agave equivalent: jobs-upload -F - <<< data -S system location
+	Agave CLI: jobs-upload -F - <<< data -S system location
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -112,7 +167,7 @@ def agaveRequestGetFile(user,path,fileName):
 
 def agaveRequestJobSearch(user,jobName='',jobId=''):
 	"""Searches for all jobs with the name jobName.
-	Agave equivalent: jobs-search 'name=jobName'
+	Agave CLI: jobs-search 'name=jobName'
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -132,7 +187,7 @@ def agaveRequestJobSearch(user,jobName='',jobId=''):
 
 def agaveRequestJobsOutputList(user,jobId):
 	"""List the output file of the given job.
-	Agave equivalent: jobs-output-list jobId
+	Agave CLI: jobs-output-list jobId
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -148,7 +203,7 @@ def agaveRequestJobsOutputList(user,jobId):
 
 def agaveRequestSystemsList(user):
 	"""List available systems.
-	Agave equivalent: systems-list -V
+	Agave CLI: systems-list -V
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -163,7 +218,7 @@ def agaveRequestSystemsList(user):
 
 def agaveRequestSubmitJob(user,data):
 	"""Submit a new job.
-	Agave equivalent: jobs-submit -F - <<< data
+	Agave CLI: jobs-submit -F - <<< data
 	Note: the dict data needs to be in double quotes.
 	Use json.dumps(data) if needed
 	"""
@@ -195,7 +250,7 @@ def agaveRequestSubmitJob(user,data):
 
 def agaveRequestAppDetails(user,appid):
 	"""Get the details of an application.
-	Agave equivalent: apps-list -V appid
+	Agave CLI: apps-list -V appid
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -210,7 +265,7 @@ def agaveRequestAppDetails(user,appid):
 
 def agaveRequestAppsList(user):
 	"""Lists all applications available to the user
-	Agave equivalent: apps-list
+	Agave CLI: apps-list
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -225,7 +280,7 @@ def agaveRequestAppsList(user):
 
 def agaveRequestClientList(username, password, clientName='vDef'):
 	"""List client
-	Agave equivalent: clients-list -u username -p password clientName
+	Agave CLI: clients-list -u username -p password clientName
 	"""
 	params = (('pretty', 'true'),)
 	response = requests.get(BASEURL + 'clients/v2/' + clientName, 
@@ -236,7 +291,7 @@ def agaveRequestClientList(username, password, clientName='vDef'):
 
 def agaveRequestClientDelete(username, password, clientName='vDef'):
 	"""Delete client
-	Agave equivalent: clients-delete -u username -p password clientName
+	Agave CLI: clients-delete -u username -p password clientName
 	"""
 	params = (('pretty', 'true'),)
 	response = requests.delete(BASEURL + 'clients/v2/' + clientName, 
@@ -247,7 +302,7 @@ def agaveRequestClientDelete(username, password, clientName='vDef'):
 
 def agaveRequestCreateClient(username, password, clientName='vDef'):
 	"""Create a new client
-	Agave equivalent: clients-create -u username -p password -N clientName
+	Agave CLI: clients-create -u username -p password -N clientName
 	"""
 	params = (('pretty', 'true'),)
 	data = {
@@ -265,7 +320,7 @@ def agaveRequestCreateClient(username, password, clientName='vDef'):
 
 def agaveRequestCreateToken(username, password, user):
 	"""Create a new token
-	Agave equivalent: auth-tokens-create -u username -p password
+	Agave CLI: auth-tokens-create -u username -p password
 	"""
 	data = {
 	  'username': username,
@@ -286,7 +341,7 @@ def agaveRequestCreateToken(username, password, user):
 def agaveRequestRefreshToken(user):
 	"""Refresh the token
 	Saves new token to user profile
-	Agave equivalent: auth-tokens-refresh
+	Agave CLI: auth-tokens-refresh
 	"""
 	clientKey = user.profile.clientkey
 	clientSecret = user.profile.clientsecret
@@ -307,7 +362,7 @@ def agaveRequestRefreshToken(user):
 
 def agaveRequestStopJob(user,jobId):
 	"""Stop a job
-	Avage equivalent: jobs-stop jobid
+	Agave CLI: jobs-stop jobid
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
