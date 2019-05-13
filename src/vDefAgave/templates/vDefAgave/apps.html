@@ -13,16 +13,12 @@
 			<h3><a id="label" class="article-title" href="{% url 'jobs-setup' %}?appId=appid"></a></h3>
 			<p id="description" class="article-content"></p>
 			<p id="permissions"></p>
-			Grant Permission
-			<div class="row">
-				<div class="col-md-3">
-					<form method="POST">
-						{% crispy permForm %}
-					</form>
-				</div>
-				<div class="col-md-3">
-					<button type="button" id="btnPerm" class="btn btn-primary">Submit</button>
-				</div>
+			<div class="permissionsSection">
+				Grant Permission
+				<form method="POST">
+					{% crispy permForm %}
+				</form>
+				<button type="button" id="btnPerm" class="btn btn-primary">Submit</button>
 			</div>
 		</div>
 	</article>
@@ -33,8 +29,8 @@
 <script type="text/javascript">
 {% block jquery %}
 	$("select").change(function(){
-		var apps = '{{ response.result }}';
-		apps = apps.replace(/&#39;/g, '"').replace(/False/g, false).replace(/True/g, true).replace(/None/g, null);
+		var apps = '{{ apps }}';
+		apps = apps.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/False/g, false).replace(/True/g, true).replace(/None/g, null).replace(/(\r\n|\n|\r)/gm," ");
 		apps = JSON.parse(apps);
 
 		var appsEl = document.getElementById("id_apps");
@@ -76,7 +72,7 @@
 				perms = []
 				users.forEach(function(user) {
 					perm = user.username + ' (';
-					if (user.permission['read']) {perm += 'r';} else {perm += '-'}
+					if (user.permission.read) {perm += 'r';} else {perm += '-'}
 					if (user.permission.write) {perm += 'w';} else {perm += '-'}
 					if (user.permission.execute) {perm += 'x';} else {perm += '-'}
 					perm += ')';
@@ -94,14 +90,31 @@
 
 		document.getElementById("btnPerm").onclick = function(evt) {
 			var userEl = document.getElementById("id_updateUser");
-			var endpoint = '/apps/pems/' + appId + '/' + userEl.value;
+			var newPerm = [];
+			var newPermShort = ['-','-','-'];
+			if ($('#id_perm_1').is(":checked")) {
+				newPerm.push('READ'); 
+				newPermShort[0] = 'r';
+			}
+			if ($('#id_perm_2').is(":checked")) {
+				newPerm.push('WRITE'); 
+				newPermShort[1] = 'w';
+			}
+			if ($('#id_perm_3').is(":checked")) {
+				newPerm.push('EXECUTE'); 
+				newPermShort[2] = 'x';
+			}
+			newPerm = newPerm.join('_');
+			newPermShort = newPermShort.join('');
+			if (newPerm == 'READ_WRITE_EXECUTE') {newPerm = 'ALL';}
+			var endpoint = '/apps/pems/' + appId + '/' + userEl.value + '/' + newPerm + '/';
 			$.ajax({
 				method: "GET",
 				url: endpoint,
 				success: function(data){
 					if (data.status == "success") {
 						var permissionsEl = document.getElementById('permissions');
-						perm = ', ' + userEl.value + ' (rwx)';
+						perm = ', ' + userEl.value + ' (' + newPermShort + ')';
 						permissionsEl.innerHTML += perm;
 					}
 				},

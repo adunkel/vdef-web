@@ -28,7 +28,7 @@
 <script type="text/javascript">
 {% block jquery %}
 	$("#id_systems").change(function(){
-		var systems = '{{ response2 }}';
+		var systems = '{{ systems }}';
 		systems = systems.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/False/g, false).replace(/True/g, true).replace(/None/g, null).replace(/(\r\n|\n|\r)/gm," ");
 		systems = JSON.parse(systems);
 
@@ -87,10 +87,9 @@
 
 		document.getElementById("btnRole").onclick = function(evt) {
 			var userEl = document.getElementById("id_updateUser");
-			var roleEl = document.getElementById("id_role");
-			var newRole = roleEl.options[roleEl.selectedIndex].value;
-
+			var newRole = $("input[name=role]:checked").val();
 			var endpoint = '/systems/roles/' + systemId + '/' + userEl.value + '/' + newRole + '/';
+			
 			$.ajax({
 				method: "GET",
 				url: endpoint,

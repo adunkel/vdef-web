@@ -59,18 +59,16 @@ def agaveRequestSystemsRolesList(user,systemId):
 	"""
 	token,headers,params = agaveRequestCommon(user)
 	urlExt = 'systems/v2/' + systemId + '/roles/'
-	print(urlExt)
 	response = agaveRequestGet(urlExt=urlExt, headers=headers, params=params)
-	print(response.text)
 	return response.json()
 
-def agaveRequestAppsPemsUpdate(user,appId,updateUser):
+def agaveRequestAppsPemsUpdate(user,appId,updateUser,perm):
 	"""Gives updateUser permission for appId
 	Agave CLI: apps-pems-update -u updateUser -p ALL appId
 	"""
 	token,headers,params = agaveRequestCommon(user)
 	urlExt = 'apps/v2/' + appId + '/pems/' + updateUser
-	data = {'permission': 'ALL'}
+	data = {'permission': perm}
 	response = agaveRequestPost(urlExt=urlExt, headers=headers, params=params, data=data)
 	return response.json()
 
@@ -82,7 +80,6 @@ def agaveRequestAppPemsList(user,appId):
 	urlExt = 'apps/v2/' + appId + '/pems/'
 	response = agaveRequestGet(urlExt=urlExt, headers=headers, params=params)
 	return response.json()
-
 
 def agaveRequestMetadataList(user):
 	"""List metadata

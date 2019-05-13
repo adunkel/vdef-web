@@ -23,9 +23,9 @@ def systemRolesList(request,systemId):
 	return JsonResponse(response)
 
 @login_required
-def appPemsUpdate(request,appId,updateUser):
+def appPemsUpdate(request,appId,updateUser,perm):
 	user = request.user
-	response = agaveRequestAppsPemsUpdate(user,appId,updateUser)
+	response = agaveRequestAppsPemsUpdate(user,appId,updateUser,perm)
 	return JsonResponse(response)
 
 @login_required
@@ -54,7 +54,7 @@ def apps(request):
 	context = {
 		'form': form,
 		'permForm': permForm,
-		'response': response,
+		'apps': json.dumps(apps),
 		'title': 'Apps'
 	}
 	return render(request, 'vDefAgave/apps.html', context)
@@ -75,8 +75,7 @@ def systems(request):
 	context = {
 		'dropdownForm': dropdownForm,
 		'roleForm': roleForm,
-		'response': response,
-		'response2': json.dumps(systems),
+		'systems': json.dumps(systems),
 		'title': 'Systems'
 	}
 	return render(request, 'vDefAgave/systems.html', context)
