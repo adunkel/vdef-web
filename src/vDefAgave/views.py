@@ -2,13 +2,25 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
-import requests
+import requests, json
 from .agaveRequests import *
 from .forms import *
 
 
 def home(request):
 	return render(request, 'vDefAgave/home.html')
+
+@login_required
+def systemRoleUpdate(request,systemId,updateUser,role):
+	user = request.user
+	response = agaveRequestSystemsRolesUpdate(user,systemId,updateUser,role)
+	return JsonResponse(response)
+
+@login_required
+def systemRolesList(request,systemId):
+	user = request.user
+	response = agaveRequestSystemsRolesList(user,systemId)
+	return JsonResponse(response)
 
 @login_required
 def appPemsUpdate(request,appId,updateUser):
@@ -29,17 +41,12 @@ def apps(request):
 
 	apps = response['result']
 
-	print(request)
-
 	if request.method == 'POST':
-		print(request.POST)
 		form = AppsDropdownForm(request.POST, apps=apps)
 		permForm = AppsGrantPermission(request.POST)
 		if form.is_valid():
 			updateUser = form.cleaned_data.get('updateUser')
 			appId = form.cleaned_data.get('apps')
-			print(updateUser)
-			print(appId)
 	else:
 		permForm = AppsGrantPermission()
 		form = AppsDropdownForm(apps=apps)
@@ -57,8 +64,19 @@ def apps(request):
 def systems(request):
 	user = request.user
 	response = agaveRequestSystemsList(user)
+
+	systems = response['result']
+	# print(systems)
+	# print(json.dumps())
+
+	roleForm = SystemsGrantRole()
+	dropdownForm = SystemsDropdownForm(systems=systems)
+
 	context = {
+		'dropdownForm': dropdownForm,
+		'roleForm': roleForm,
 		'response': response,
+		'response2': json.dumps(systems),
 		'title': 'Systems'
 	}
 	return render(request, 'vDefAgave/systems.html', context)

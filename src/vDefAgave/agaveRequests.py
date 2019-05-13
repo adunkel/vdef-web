@@ -41,6 +41,29 @@ def agaveRequestPost(urlExt, headers, params, data):
 			print('Agave request error. Attempt', attempts)
 	return response
 
+def agaveRequestSystemsRolesUpdate(user,systemId,updateUser,role):
+	"""Gives updateUser the role for systemId
+	Agave CLI: systems-roles-addupdate -u updateUser -r role systemId
+	"""
+	token,headers,params = agaveRequestCommon(user)
+	headers['Content-Type'] = 'application/json'
+
+	data = json.dumps({'role': role})
+	urlExt = 'systems/v2/' + systemId + '/roles/' + updateUser
+	response = agaveRequestPost(urlExt=urlExt, headers=headers, params=params, data=data)
+	return response.json()
+
+def agaveRequestSystemsRolesList(user,systemId):
+	"""Lists roles of system
+	Agave CLI: systems-roles-list systemId
+	"""
+	token,headers,params = agaveRequestCommon(user)
+	urlExt = 'systems/v2/' + systemId + '/roles/'
+	print(urlExt)
+	response = agaveRequestGet(urlExt=urlExt, headers=headers, params=params)
+	print(response.text)
+	return response.json()
+
 def agaveRequestAppsPemsUpdate(user,appId,updateUser):
 	"""Gives updateUser permission for appId
 	Agave CLI: apps-pems-update -u updateUser -p ALL appId
@@ -49,7 +72,6 @@ def agaveRequestAppsPemsUpdate(user,appId,updateUser):
 	urlExt = 'apps/v2/' + appId + '/pems/' + updateUser
 	data = {'permission': 'ALL'}
 	response = agaveRequestPost(urlExt=urlExt, headers=headers, params=params, data=data)
-	print(response.json())
 	return response.json()
 
 def agaveRequestAppPemsList(user,appId):

@@ -1,16 +1,113 @@
 {% extends "vDefAgave/base.html" %}
+{% load crispy_forms_tags %}
 {% block content %}
-	{% for system in response.result %}
+	<form method="POST">
+		{% crispy dropdownForm %}
+	</form>
 	<article class="media content-section">
 		<div class="media-body">
 			<div class="article-metadata">
-				<small class="mr-2">{{ system.id }}</small>
-				<small class="text-muted">{{ system.type }}</small>
+				<small id="systemId" class="mr-2"></small>
+				<small id="type" class="text-muted mr-2"></small>
+				<small id="lastUpdated" class="text-muted"></small>
 			</div>
-			<h3>{{ system.name }}</h3>
-			<p class="article-content">{{ system.description }}</p>
-			<p class="article-content">Status: {{ system.status }}</p>
+			<h3 class="article-title" id="name"></h3>
+			<p id="description" class="article-content"></p>
+			<p id="rolesList"></p>
+			<div class="permissionsSection">
+				Grant Role
+				<form method="POST">
+					{% crispy roleForm %}
+				</form>
+				<button type="button" id="btnRole" class="btn btn-primary">Submit</button>
+			</div>
 		</div>
 	</article>
-	{% endfor %}
 {% endblock content %}
+
+<script type="text/javascript">
+{% block jquery %}
+	$("#id_systems").change(function(){
+		var systems = '{{ response2 }}';
+		systems = systems.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/False/g, false).replace(/True/g, true).replace(/None/g, null).replace(/(\r\n|\n|\r)/gm," ");
+		systems = JSON.parse(systems);
+
+		var systemsEl = document.getElementById("id_systems");
+		var systemId = systemsEl.options[systemsEl.selectedIndex].value;
+
+		var system = systems.find(function(element) {
+			return element['id'] == systemId;
+		});
+
+		var systemIdEl = document.getElementById('systemId');
+		systemIdEl.innerHTML = systemId;
+
+		var typeEl = document.getElementById('type');
+		typeEl.innerHTML = system.type;
+
+		var lastUpdated = new Date(system['lastUpdated']);
+		var YYYY = lastUpdated.getFullYear();
+		var MM = lastUpdated.getMonth() + 1;
+		var DD = lastUpdated.getDate();
+		var hh = lastUpdated.getHours();
+		var mm = lastUpdated.getMinutes();
+		var ss = lastUpdated.getSeconds();
+		var lastUpdatedEl = document.getElementById('lastUpdated');
+		lastUpdatedEl.innerHTML = `${MM}-${DD}-${YYYY} ${hh}:${mm}:${ss}`;
+
+		var nameEl = document.getElementById('name');
+		nameEl.innerHTML = system['name'];
+
+		var descriptionEl = document.getElementById('description');
+		descriptionEl.innerHTML = system['description'];
+
+		// var El = document.getElementById('');
+		// El.innerHTML = system[''];
+
+		var endpoint = '/systems/roles/' + systemId;
+		$.ajax({
+			method: "GET",
+			url: endpoint,
+			success: function(data){
+				var users = data.result;
+				roles = []
+				users.forEach(function(user) {
+					role = user.username + ' (' + user.role + ')';
+					roles.push(role);
+				})
+				roles = roles.join(', ');
+				var rolesListEl = document.getElementById('rolesList');
+				rolesListEl.innerHTML = 'Roles: ' + roles;
+			},
+			error: function(error_data){
+				console.log("error");
+				console.log(error_data);
+			}
+		})
+
+		document.getElementById("btnRole").onclick = function(evt) {
+			var userEl = document.getElementById("id_updateUser");
+			var roleEl = document.getElementById("id_role");
+			var newRole = roleEl.options[roleEl.selectedIndex].value;
+
+			var endpoint = '/systems/roles/' + systemId + '/' + userEl.value + '/' + newRole + '/';
+			$.ajax({
+				method: "GET",
+				url: endpoint,
+				success: function(data){
+					if (data.status == "success") {
+						var rolesListEl = document.getElementById('rolesList');
+						var newRoleList = ', ' + userEl.value + ' (' + newRole + ')';
+						rolesListEl.innerHTML += newRoleList;
+					}
+				},
+				error: function(error_data){
+					console.log("error");
+					console.log(error_data);
+				}
+			})
+		}
+
+  });
+{% endblock %}
+</script>
