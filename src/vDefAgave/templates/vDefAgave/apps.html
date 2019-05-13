@@ -4,7 +4,7 @@
 	<form method="POST">
 		{% crispy form %}
 	</form>
-	<article class="media content-section">
+	<article class="media content-section" id="appContent">
 		<div class="media-body">
 			<div class="article-metadata">
 				<small id="appId" class="mr-2"></small>
@@ -28,18 +28,25 @@
 
 <script type="text/javascript">
 {% block jquery %}
+	var contentEl = document.getElementById('appContent');
+	contentEl.style.display = 'none'; // Hide content section
+
 	$("select").change(function(){
+		contentEl.style.display = '' // Unhide content section
 		var apps = '{{ apps }}';
 		apps = apps.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/False/g, false).replace(/True/g, true).replace(/None/g, null).replace(/(\r\n|\n|\r)/gm," ");
 		apps = JSON.parse(apps);
 
+		// Get appId
 		var appsEl = document.getElementById("id_apps");
 		var appId = appsEl.options[appsEl.selectedIndex].value;
 
+		// Get app data for appId
 		var app = apps.find(function(element) {
 			return element['id'] == appId;
 		});
 
+		// Set innerHTML
 		var appIdEl = document.getElementById('appId');
 		appIdEl.innerHTML = appId;
 
@@ -63,6 +70,7 @@
 		// var El = document.getElementById('');
 		// El.innerHTML = app[''];
 
+		// Get permissions
 		var endpoint = '/apps/pems/' + appId;
 		$.ajax({
 			method: "GET",
@@ -88,6 +96,7 @@
 			}
 		})
 
+		// Submit new permissions
 		document.getElementById("btnPerm").onclick = function(evt) {
 			var userEl = document.getElementById("id_updateUser");
 			var newPerm = [];

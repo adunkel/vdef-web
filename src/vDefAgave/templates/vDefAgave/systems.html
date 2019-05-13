@@ -4,7 +4,7 @@
 	<form method="POST">
 		{% crispy dropdownForm %}
 	</form>
-	<article class="media content-section">
+	<article class="media content-section" id="systemContent">
 		<div class="media-body">
 			<div class="article-metadata">
 				<small id="systemId" class="mr-2"></small>
@@ -27,18 +27,25 @@
 
 <script type="text/javascript">
 {% block jquery %}
+	var contentEl = document.getElementById('systemContent');
+	contentEl.style.display = 'none'; // Hide content section
+
 	$("#id_systems").change(function(){
+		contentEl.style.display = ''; // Unhide content section
 		var systems = '{{ systems }}';
 		systems = systems.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/False/g, false).replace(/True/g, true).replace(/None/g, null).replace(/(\r\n|\n|\r)/gm," ");
 		systems = JSON.parse(systems);
 
+		// Get systemId
 		var systemsEl = document.getElementById("id_systems");
 		var systemId = systemsEl.options[systemsEl.selectedIndex].value;
 
+		// Get system data for systemId
 		var system = systems.find(function(element) {
 			return element['id'] == systemId;
 		});
 
+		// Set innerHTML
 		var systemIdEl = document.getElementById('systemId');
 		systemIdEl.innerHTML = systemId;
 
@@ -60,10 +67,10 @@
 
 		var descriptionEl = document.getElementById('description');
 		descriptionEl.innerHTML = system['description'];
-
 		// var El = document.getElementById('');
 		// El.innerHTML = system[''];
 
+		// Get roles
 		var endpoint = '/systems/roles/' + systemId;
 		$.ajax({
 			method: "GET",
@@ -85,6 +92,7 @@
 			}
 		})
 
+		// Submit new roles
 		document.getElementById("btnRole").onclick = function(evt) {
 			var userEl = document.getElementById("id_updateUser");
 			var newRole = $("input[name=role]:checked").val();
