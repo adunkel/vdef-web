@@ -145,7 +145,9 @@ def getFile(request,jobId,fileName):
 	jobResponse = agaveRequestJobSearch(user,jobId=jobId)
 	path = jobResponse['result'][0]['_links']['archiveData']['href']
 	response = agaveRequestGetFile(user,path,fileName)
-	return HttpResponse(response.content)
+	response = HttpResponse(response.content, content_type='application/force-download')
+	response['Content-Disposition'] = 'attachment; filename=%s' %fileName
+	return response
 
 @login_required
 def output(request,jobId):
