@@ -7,14 +7,10 @@
 				<article class="media content-section">
 					<div class="media-body">
 						<div class="article-metadata">
-							<small class="text-muted">{{ status }}</small>
+							<small class="text-muted">FINISHED {{ status.FINISHED }}, RUNNING {{ status.RUNNING }}, FAILED {{ status.FAILED }}</small>
 						</div>
-						{% if status == 'FINISHED' %}
-							<a href="{% url 'jobs-chart' name %}">{{ name }}</a>
-							<button type="button" class="btn btn-sm" id="btn_refresh_{{ name }}">Refresh</button>
-						{% else %}
-							{{ name }}<br>
-						{% endif %}
+						<a href="{% url 'jobs-chart' name %}">{{ name }}</a>
+						<button type="button" class="btn btn-sm" id="btn_refresh_{{ name }}">Refresh</button>
 					</div>
 				</article>
 			</div>

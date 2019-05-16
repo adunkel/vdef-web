@@ -179,9 +179,10 @@ def listJobs(request):
 		value = metadata['value']
 		if 'jobName' in value:
 			jobName = value['jobName']
-			if jobName not in jobNames:
-				for jobId in metadata['associationIds']:
-					Job(name=jobName,jobid=jobId,user=user).save()
+			jobsInDB = [job.jobid for job in Job.objects.filter(name=jobName)]
+			jobsNotInDB = (set(jobsInDB) ^ set(metadata['associationIds'])) & set(metadata['associationIds'])
+			for jobId in jobsNotInDB:
+				Job(name=jobName,jobid=jobId,user=user).save()
 
 	# Get distinct job names in database by user
 	jobNames = user.job_set.values_list('name', flat=True).distinct()
@@ -189,28 +190,27 @@ def listJobs(request):
 		response = {}
 		finished = 0
 		failed = 0
+		running = 0
 		jobs = Job.objects.filter(name=jobName)
-		print('===')
-		print(jobName)
+		# print('===')
+		# print(jobName)
 		for job in jobs:
 			# If status is not finished in db, get current status
-			print(job.status)
+			# print(job.status)
 			if job.status not in ['FINISHED','STOPPED','FAILED']:
 				response = agaveRequestJobSearch(user,jobId=job.jobid)
 				status = response['result'][0]['status']
 				job.status = status
 				job.save()
-				if status in ['FINISHED','STOPPED','FAILED']:
-					finished += 1
-				elif status in ['STOPPED','FAILED']:
-					failed += 1
-				else:
-					# break if one subjob is not finished
-					break
-		if (finished+failed) == len(jobs) and finished > 0:
-			jobStatus.append('FINISHED')
-		else:
-			jobStatus.append(job.status)
+			if job.status in ['FINISHED']:
+				finished += 1
+			elif job.status in ['STOPPED','FAILED']:
+				failed += 1
+			else:
+				running += 1
+		jobStatus.append({'FINISHED': finished,
+						  'RUNNING': running,
+					 	  'FAILED': failed})
 
 	# Create jobname:status dictionary
 	jobs = dict(zip(jobNames,jobStatus))
