@@ -81,9 +81,9 @@ def agaveRequestAppPemsList(user,appId):
 	response = agaveRequestGet(urlExt=urlExt, headers=headers, params=params)
 	return response.json()
 
-def agaveRequestMetadataList(user):
+def agaveRequestMetadataList(user,Q={}):
 	"""List metadata
-	Agave CLI: metadata-list
+	Agave CLI: metadata-list -Q '{"name":"vDef"}'
 	"""
 	user = checkAuth(user)
 	token = user.profile.accesstoken
@@ -91,6 +91,7 @@ def agaveRequestMetadataList(user):
 	headers = {'Authorization': 'Bearer ' + token,}
 
 	q = {"name":"vDef"}
+	q = {**q,**Q} # merge dictionaries
 	q = json.dumps(q)
 
 	params = (
@@ -419,7 +420,7 @@ def waitForIt(eventid,key):
 	params = (
 	    ('eventid', eventid),
 	    ('key', key),
-	    ('tmout', '120'),
+	    ('tmout', '180'),
 	)
 	response = requests.get('http://melete05.cct.lsu.edu/event', params=params)
 	if response.text == '':

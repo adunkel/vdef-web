@@ -68,6 +68,7 @@ def getData(request,jobName):
 	mediaFolder = 'job_pictures/'
 
 	user = request.user
+	updateJobDB(request,Q={"value.jobName":jobName})
 	jobs = user.job_set.filter(name=jobName)
 
 	if jobs:
@@ -79,29 +80,21 @@ def getData(request,jobName):
 		jobs = [job for job in jobs if job.status == 'FINISHED']
 
 		for job in jobs:
+
 			if not job.value:
 				jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
 				fileName = job.jobid + fileEnding
 				imageName = job.jobid + '.png'
 				path = jobResponse['result'][0]['_links']['archiveData']['href']
-				fileResponse = agaveRequestGetFile(user,path,fileName)
+				# fileResponse = agaveRequestGetFile(user,path,fileName)
 				imageResponse = agaveRequestGetFile(user,path,imageName)
 				with open(mediaPath + mediaFolder + imageName, 'wb') as f:
 					f.write(imageResponse.content)
 
-				print(fileResponse.text)
-				pointData = json.loads(fileResponse.text)
-				# Determine parameter names and order
-				if not paraNames:
-					paraNames = [*pointData['parameter']]
-				job.value = pointData['value']
-				job.color = pointData['color']
-				job.para1name = paraNames[0]
-				job.para2name = paraNames[1]
-				job.para1value = pointData['parameter'][paraNames[0]]
-				job.para2value = pointData['parameter'][paraNames[1]]
+				job.value = 8 #pointData['value']
+				job.color = 'blue' #pointData['color']
 				job.picture = mediaFolder + imageName
-				job.save()				
+				job.save()
 
 				time.sleep(2) # Pause time
 
@@ -164,25 +157,56 @@ def output(request,jobId):
 	return JsonResponse(data)
 
 @login_required
+def updateJobDB(request,Q={}):
+	"""Update the job database with metadata items
+	An option query Q can be given. Ex.: Q={"value.jobName": "myJobName"}
+	"""
+	user = request.user
+	# Get metadata
+	response = agaveRequestMetadataList(user,Q=Q)
+	# Add job if not in db
+	for metadata in response['result']:
+		value = metadata['value']
+		if 'jobName' in value and 'parameters' in value:
+			jobName = value['jobName']
+			print(jobName)
+			para1name = value['parameters'][0]
+			para2name = value['parameters'][1]
+			jobsInDB = Job.objects.filter(name=jobName)
+
+			# Update status if not 'FINISHED'
+			for job in jobsInDB:
+				if job.status not in ['FINISHED']:
+					jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
+					status = jobResponse['result'][0]['status']
+					job.status = status
+					job.save()
+
+			# Create new job entries
+			jobsInDB = [job.jobid for job in Job.objects.filter(name=jobName)]
+			jobsNotInDB = (set(jobsInDB) ^ set(metadata['associationIds'])) & set(metadata['associationIds'])
+			for jobId in jobsNotInDB:
+				jobResponse = agaveRequestJobSearch(user,jobId=jobId)
+				status = jobResponse['result'][0]['status']
+				para1value = value['paraValues'][jobId][para1name]
+				para2value = value['paraValues'][jobId][para2name]
+				Job(name=jobName,
+					jobid=jobId,
+					user=user,
+					para1name=para1name,
+					para1value=para1value,
+					para2name=para2name,
+					para2value=para2value,
+					status=status).save()
+
+@login_required
 def listJobs(request):
 	user = request.user
 	jobStatus = []
 
 	# Get list of jobs in db
 	jobNames = user.job_set.values_list('name', flat=True).distinct()
-
-	# Get metadata
-	response = agaveRequestMetadataList(user)
-
-	# Add job if not in db
-	for metadata in response['result']:
-		value = metadata['value']
-		if 'jobName' in value:
-			jobName = value['jobName']
-			jobsInDB = [job.jobid for job in Job.objects.filter(name=jobName)]
-			jobsNotInDB = (set(jobsInDB) ^ set(metadata['associationIds'])) & set(metadata['associationIds'])
-			for jobId in jobsNotInDB:
-				Job(name=jobName,jobid=jobId,user=user).save()
+	updateJobDB(request)
 
 	# Get distinct job names in database by user
 	jobNames = user.job_set.values_list('name', flat=True).distinct()
@@ -195,13 +219,6 @@ def listJobs(request):
 		# print('===')
 		# print(jobName)
 		for job in jobs:
-			# If status is not finished in db, get current status
-			# print(job.status)
-			if job.status not in ['FINISHED','STOPPED','FAILED']:
-				response = agaveRequestJobSearch(user,jobId=job.jobid)
-				status = response['result'][0]['status']
-				job.status = status
-				job.save()
 			if job.status in ['FINISHED']:
 				finished += 1
 			elif job.status in ['STOPPED','FAILED']:
@@ -329,7 +346,8 @@ def submit(request):
 			notificationURL = 'http://melete05.cct.lsu.edu/report?status=QUEUED&eventid='+appId+'&key='+user.username
 			notification = [{
 				'url':notificationURL,
-				'event':'QUEUED',
+				# 'event':'QUEUED',
+				'event':'FINISHED',
 				'persistent':False
 			}]
 			agaveParameters = {key: 0 for key in agaveParameters}
@@ -364,8 +382,6 @@ def submit(request):
 			paraValues = []
 			for paraCombination in list(itertools.product(*space)):
 				paraDict = dict(zip(parameters,paraCombination))
-				print(paraDict)
-				paraValues.append(paraDict)#######!!!!!!!!!!!!!!
 
 				# Substitute agave parameters
 				agaveParameters = {key: paraDict[key] for key in agaveParameters}
