@@ -60,7 +60,8 @@ def refresh(request,jobName):
 @login_required
 def getData(request,jobName):
 	colorDefinitions = {'red': ['193','46','12'],
-						'blue': ['63','11','193']}
+						'blue': ['63','11','193'],
+						'orange': ['255','140','0']}
 	colors = []
 	points = []
 	fileEnding = '_chart.json'
@@ -76,32 +77,27 @@ def getData(request,jobName):
 		response = ''
 		paraNames = []
 
-		# Exclude jobs that did not finish
-		jobs = [job for job in jobs if job.status == 'FINISHED']
-
 		for job in jobs:
+			if job.status == 'FINISHED':
+				if job.picture == 'job_pictures/default.jpg':
+					jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
+					imageName = job.jobid + '.png'
+					path = jobResponse['result'][0]['_links']['archiveData']['href']
+					imageResponse = agaveRequestGetFile(user,path,imageName)
+					time.sleep(2) # Pause time
+					with open(mediaPath + mediaFolder + imageName, 'wb') as f:
+						f.write(imageResponse.content)
+					job.picture = mediaFolder + imageName
+				if job.color != 'blue':
+					job.color = 'blue'
+			elif job.status == 'RUNNING' and job.color != 'orange':
+				job.color = 'orange'
+			elif job.status == 'FAILED' and job.color != 'red':
+				job.color = 'red'
+			job.save()
 
-			if not job.value:
-				jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
-				fileName = job.jobid + fileEnding
-				imageName = job.jobid + '.png'
-				path = jobResponse['result'][0]['_links']['archiveData']['href']
-				# fileResponse = agaveRequestGetFile(user,path,fileName)
-				imageResponse = agaveRequestGetFile(user,path,imageName)
-				with open(mediaPath + mediaFolder + imageName, 'wb') as f:
-					f.write(imageResponse.content)
-
-				job.value = 8 #pointData['value']
-				job.color = 'blue' #pointData['color']
-				job.picture = mediaFolder + imageName
-				job.save()
-
-				time.sleep(2) # Pause time
-
-		# Prepare data
+		# Prepare data for chart
 		jobs = user.job_set.filter(name=jobName)
-		# Exclude jobs that did not finish
-		jobs = [job for job in jobs if job.status == 'FINISHED']
 
 		for job in jobs:
 			if not paraNames:
@@ -193,6 +189,7 @@ def updateJobDB(request,Q={}):
 				Job(name=jobName,
 					jobid=jobId,
 					user=user,
+					value=8,
 					para1name=para1name,
 					para1value=para1value,
 					para2name=para2name,
