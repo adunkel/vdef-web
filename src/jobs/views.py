@@ -431,6 +431,7 @@ def submit(request):
 				agaveRequestUploadFile(user,geoFile, geoFileName, archiveSystem,location)
 				time.sleep(2) # Pause time
 				agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
+				1/0
 
 				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFileName
 				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFileName

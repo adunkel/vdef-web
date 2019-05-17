@@ -41,6 +41,39 @@ def agaveRequestPost(urlExt, headers, params, data):
 			print('Agave request error. Attempt', attempts)
 	return response
 
+def agaveRequestPut(urlExt, headers, params, data):
+	response = None
+	attempts = 1
+	while response is None and attempts <= 3:
+		try:
+			response = requests.put(BASEURL + urlExt, 
+									 headers=headers, 
+									 params=params, 
+									 data=data,
+									 verify=True)
+		except:
+			print('Agave request error. Attempt', attempts)
+	return response
+
+def agaveRequestMkdir(user,system,path):
+	"""Create directory path on system
+	Agave CLI: files-mkdir -S system -N folder -V subpath/
+	path = subpath/folder
+	"""
+	token,headers,params = agaveRequestCommon(user)
+	splitpath = path.split('/')
+	myConsole(user,'Creating folder: ' + path + ' on ' + system)
+	for i in range(len(splitpath)):
+		folder = splitpath[i]
+		path = '/'.join(splitpath[0:i])
+		myConsole(user,'    ' + path + '/' + folder)
+
+		data = {'action': 'mkdir', 'path': folder}
+		urlExt = 'files/v2/media/system/' + system + '/' + path
+		response = agaveRequestPut(urlExt=urlExt, headers=headers, params=params, data=data)
+	return response.json()
+
+
 def agaveRequestSystemsRolesUpdate(user,systemId,updateUser,role):
 	"""Gives updateUser the role for systemId
 	Agave CLI: systems-roles-addupdate -u updateUser -r role systemId
@@ -152,7 +185,7 @@ def agaveRequestUploadFile(user,data,fileName,system,location):
 		'fileName': (None, fileName),
 	}
 
-	print('===File Uploaded===')
+	myConsole(user,'Uploading file: ' + fileName + ' to ' + system + ':' + location)
 	response = None
 	while response is None:
 		try:
@@ -161,11 +194,14 @@ def agaveRequestUploadFile(user,data,fileName,system,location):
 									 params=params, 
 									 files=files, 
 									 verify=True)
+			response = response.json()
+			if response['status'] != 'success':
+				agaveRequestMkdir(user,system,location)
+				response = None
+
 		except:
-			print('===Error===')
-	
-	print(response.json())
-	return response.json()
+			myConsole(user,'ERROR - trying again')
+	return response
 
 def agaveRequestGetFile(user,path,fileName):
 	user = checkAuth(user)
@@ -428,3 +464,8 @@ def waitForIt(eventid,key):
 	else:
 		result = response.json()
 	return result
+
+def myConsole(user,string):
+	now = timezone.now()
+	p = '[' + now.strftime("%Y/%m/%d %H:%M:%S") + ' ' + user.username + '] ' + string
+	print(p)
