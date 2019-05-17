@@ -336,6 +336,7 @@ def submit(request):
 			#Extract form data
 			name = form.cleaned_data.get('name')
 			email = form.cleaned_data.get('email')
+			sampling = form.cleaned_data.get('sampling')
 
 			# Set other job values
 			appId = appId
@@ -375,17 +376,23 @@ def submit(request):
 
 			# Prepare parameter space
 			space = []
-			for parameter in parameters:
-				start = form.cleaned_data.get('sweepPara_%s_start' % parameter)
-				end = form.cleaned_data.get('sweepPara_%s_end' % parameter)
-				num = form.cleaned_data.get('sweepPara_%s_num' % parameter)
-				space.append([x for x in np.linspace(start=start, stop=end, num=num)])
 
+			if sampling == 'grid':
+				for parameter in parameters:
+					start = form.cleaned_data.get('sweepPara_%s_start' % parameter)
+					end = form.cleaned_data.get('sweepPara_%s_end' % parameter)
+					num = form.cleaned_data.get('sweepPara_%s_num' % parameter)
+					space.append([x for x in np.linspace(start=start, stop=end, num=num)])
+				space = list(itertools.product(*space))
+			elif sampling == 'random':
+				1/0
+			else: # latin square
+				1/0
 			# Iterate through all parameter combination and submit a job for each
 			jobIds = []
 			failedJobs = []
 			paraValues = []
-			for paraCombination in list(itertools.product(*space)):
+			for paraCombination in space:
 				paraDict = dict(zip(parameters,paraCombination))
 
 				# Substitute agave parameters

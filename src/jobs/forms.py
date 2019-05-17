@@ -1,7 +1,7 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Fieldset, Field, Row, Column
-from crispy_forms.bootstrap import PrependedText
+from crispy_forms.bootstrap import PrependedText, InlineCheckboxes, InlineRadios
 
 class JobSearchForm(forms.Form):
 	jobName = forms.CharField(label='Job Name')
@@ -57,6 +57,9 @@ class JobSubmitForm(forms.Form):
 	name = forms.CharField(label='Job Name')
 	email = forms.EmailField(help_text='Email to receive notifications',required=False)
 
+	samplingChoices = [('grid', 'Grid'), ('random','Random'), ('latinSqaure','Latin Square')]
+	sampling = forms.ChoiceField(label='Sampling Strategy', choices=samplingChoices, initial='grid')
+
 	def __init__(self, *args, **kwargs):
 		parameters = kwargs.pop('parameters', 0)
 		super(JobSubmitForm, self).__init__(*args, **kwargs)
@@ -83,4 +86,5 @@ class JobSubmitForm(forms.Form):
 			self.helper[len(self.helper)-3:].wrap_together(Row, css_class='form_row')
 			self.helper[len(self.helper)-1].wrap_together(Fieldset, parameter)
 
+		self.helper.layout.append(InlineRadios('sampling'))
 		self.helper.layout.append(Submit('submit', 'Submit'))
