@@ -38,7 +38,6 @@
 		custom: function(tooltipModel) {
 			// Tooltip Element
 			var tooltipEl = document.getElementById('chartjs-tooltip');
-			// console.log(tooltipEl)
 
 			// Hide if no tooltip
 			if (tooltipModel.opacity === 0) {
@@ -51,7 +50,7 @@
 
 			if (tooltipModel.body) {
 				var bodyLines = tooltipModel.body[0].lines;
-				var point = bodyLines[0].match(/\d+/g).map(Number);
+				var point = bodyLines[0].match(/\d+(\.\d+)?/g).map(Number);
 				for (var i = 0; i < points.length; i++) {
 					if (points[i].x == point[0] && points[i].y == point[1] && points[i].r == point[2]) {break;}
 				}

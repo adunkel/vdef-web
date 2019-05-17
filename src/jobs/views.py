@@ -175,7 +175,6 @@ def updateJobDB(request,Q={}):
 		value = metadata['value']
 		if 'jobName' in value and 'parameters' in value:
 			jobName = value['jobName']
-			print(jobName)
 			para1name = value['parameters'][0]
 			para2name = value['parameters'][1]
 			jobsInDB = Job.objects.filter(name=jobName)
@@ -192,6 +191,7 @@ def updateJobDB(request,Q={}):
 			jobsInDB = [job.jobid for job in Job.objects.filter(name=jobName)]
 			jobsNotInDB = (set(jobsInDB) ^ set(metadata['associationIds'])) & set(metadata['associationIds'])
 			for jobId in jobsNotInDB:
+				myConsole(user, 'Creating job entry for ' + jobId)
 				jobResponse = agaveRequestJobSearch(user,jobId=jobId)
 				status = jobResponse['result'][0]['status']
 				para1value = value['paraValues'][jobId][para1name]
@@ -223,8 +223,6 @@ def listJobs(request):
 		failed = 0
 		running = 0
 		jobs = Job.objects.filter(name=jobName)
-		# print('===')
-		# print(jobName)
 		for job in jobs:
 			if job.status in ['FINISHED']:
 				finished += 1
@@ -381,7 +379,7 @@ def submit(request):
 				start = form.cleaned_data.get('sweepPara_%s_start' % parameter)
 				end = form.cleaned_data.get('sweepPara_%s_end' % parameter)
 				num = form.cleaned_data.get('sweepPara_%s_num' % parameter)
-				space.append([int(x) for x in np.linspace(start=start, stop=end, num=num)])
+				space.append([x for x in np.linspace(start=start, stop=end, num=num)])
 
 			# Iterate through all parameter combination and submit a job for each
 			jobIds = []
@@ -401,7 +399,7 @@ def submit(request):
 				yamlFileName = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
 
 				# Substitute value into geo template 
-				geoFile = '//' + str(paraDict) + '\n'
+				geoFile = '' #'//' + str(paraDict) + '\n'
 				with open(geoFileTemplate,'r') as templateFile:
 					for line in templateFile.readlines():
 						g = re.search(r'{{(\w+)}}',line)
@@ -431,7 +429,6 @@ def submit(request):
 				agaveRequestUploadFile(user,geoFile, geoFileName, archiveSystem,location)
 				time.sleep(2) # Pause time
 				agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
-				1/0
 
 				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFileName
 				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFileName
@@ -449,9 +446,9 @@ def submit(request):
 						if response['status'] == 'success':
 							jobId = response['result']['id']
 							
-							print('===WAITING===')
+							myConsole(user, 'Waiting on job ' + jobId + ' to queue.')
 							waitResponse = waitForIt(appId,user.username)
-							print(waitResponse)
+							myConsole(user, waitResponse)
 							if waitResponse[appId] == None:
 								agaveRequestStopJob(user,jobId)
 							else:
@@ -472,7 +469,6 @@ def submit(request):
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
 				templates = [geoFileTemplate,yamlFileTemplate]
 				request = agaveRequestMetadataUpdate(user,jobIds,name,templates,parameters,paraValues)
-				print(request)
 			if len(failedJobs) > 0:
 				messages.warning(request, '%d job(s) failed with messages %s' % (len(failedJobs),failedJobs))
 

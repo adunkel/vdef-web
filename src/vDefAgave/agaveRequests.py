@@ -169,7 +169,12 @@ def agaveRequestMetadataUpdate(user,jobIds,jobName,templates,parameters,paraValu
 							 params=params, 
 							 data=data, 
 							 verify=True)
-	return response.json()
+	response = response.json()
+	if response['status'] == 'success':
+		myConsole(user, 'Metadata ' + response['result']['uuid'] + ' submitted for the jobs: ' + ', '.join(jobIds))
+	else:
+		myConsole(user, 'Metadata was not submitted successfully.')
+	return response
 
 def agaveRequestUploadFile(user,data,fileName,system,location):
 	"""Uploads a file to system with location
@@ -289,7 +294,7 @@ def agaveRequestSubmitJob(user,data):
 	data = data
 
 	response = None
-	print('===Job Submitted===')
+	myConsole(user,'Submitting job...')
 	while response is None:
 		try:
 			response = requests.post(BASEURL + 'jobs/v2/', 
@@ -297,11 +302,13 @@ def agaveRequestSubmitJob(user,data):
 									 params=params, 
 									 data=data, 
 									 verify=True)
+			if response['status'] == 'success':
+				jobId = response['result']['id']
+				myConsole(user, 'Successfully submitted job ' + jobId + ' to Agave.')
+			else:
+				myConsole(user, 'Job was not submitted succesfully.')
 		except:
-			print('===Error===')
-	
-	print(response)
-	print(response.json())
+			myConsole(user, 'Error - trying again')
 	return response.json()
 
 def agaveRequestAppDetails(user,appid):
@@ -420,6 +427,7 @@ def agaveRequestStopJob(user,jobId):
 	"""Stop a job
 	Agave CLI: jobs-stop jobid
 	"""
+	myConsole(user, 'Stopping job ' + jobId)
 	user = checkAuth(user)
 	token = user.profile.accesstoken
 	
@@ -467,5 +475,5 @@ def waitForIt(eventid,key):
 
 def myConsole(user,string):
 	now = timezone.now()
-	p = '[' + now.strftime("%Y/%m/%d %H:%M:%S") + ' ' + user.username + '] ' + string
-	print(p)
+	pre = '[' + now.strftime("%Y/%m/%d %H:%M:%S") + ' ' + user.username + ']'
+	print(pre,string)

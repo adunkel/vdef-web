@@ -63,8 +63,8 @@ class JobSubmitForm(forms.Form):
 
 		# Parameter Fields
 		for parameter in parameters:
-			self.fields['sweepPara_{parameter}_start'.format(parameter=parameter)] = forms.IntegerField(label= '', required=True)
-			self.fields['sweepPara_{parameter}_end'.format(parameter=parameter)] = forms.IntegerField(label='', required=True)
+			self.fields['sweepPara_{parameter}_start'.format(parameter=parameter)] = forms.FloatField(label= '', required=True)
+			self.fields['sweepPara_{parameter}_end'.format(parameter=parameter)] = forms.FloatField(label='', required=True)
 			self.fields['sweepPara_{parameter}_num'.format(parameter=parameter)] = forms.IntegerField(label='', required=True)
 
 		# Create Form Layout

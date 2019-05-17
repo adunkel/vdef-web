@@ -9,8 +9,8 @@ class Job(models.Model):
 	value = models.IntegerField(null=True, blank=True)
 	para1name = models.CharField(max_length=20, blank=True)
 	para2name = models.CharField(max_length=20, blank=True)
-	para1value = models.IntegerField(null=True, blank=True)
-	para2value = models.IntegerField(null=True, blank=True)
+	para1value = models.FloatField(null=True, blank=True)
+	para2value = models.FloatField(null=True, blank=True)
 	status = models.CharField(max_length=20, blank=True)
 	picture = models.ImageField(default='job_pictures/default.jpg', upload_to='job_pictures')
 
