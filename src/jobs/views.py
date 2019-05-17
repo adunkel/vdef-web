@@ -2,12 +2,14 @@ from django.shortcuts import render, redirect, reverse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, FileResponse
+from django.core.files import File
+from django.conf import settings
 from django import forms
 from vDefAgave.agaveRequests import *
 from .forms import JobSubmitForm, JobSearchForm, JobSetupForm
 from .models import Job
-import json, requests, os, re, time, itertools
+import json, requests, os, re, time, itertools, mimetypes
 import numpy as np
 
 @login_required
@@ -130,12 +132,20 @@ def getData(request,jobName):
 
 @login_required
 def getFile(request,jobId,fileName):
+	print(fileName)
 	user = request.user
 	jobResponse = agaveRequestJobSearch(user,jobId=jobId)
 	path = jobResponse['result'][0]['_links']['archiveData']['href']
-	response = agaveRequestGetFile(user,path,fileName)
-	response = HttpResponse(response.content, content_type='application/force-download')
-	response['Content-Disposition'] = 'attachment; filename=%s' %fileName
+	fileResponse = agaveRequestGetFile(user,path,fileName)
+
+	content_type = fileResponse.headers['Content-Type']
+	extension = os.path.splitext(fileName)[1]
+	if extension not in ['png','txt']:
+		content_type = 'text/plain'
+	content_disposition = fileResponse.headers['Content-Disposition']
+	response = HttpResponse(fileResponse.content, content_type=content_type)
+	response['Content-Disposition'] = content_disposition
+	# response['Content-Disposition'] = 'attachment; filename=%s' %fileName
 	return response
 
 @login_required
