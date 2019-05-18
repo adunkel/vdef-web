@@ -9,7 +9,7 @@ from django import forms
 from vDefAgave.agaveRequests import *
 from .forms import JobSubmitForm, JobSearchForm, JobSetupForm
 from .models import Job
-import json, requests, os, re, time, itertools, mimetypes
+import json, requests, os, re, time, itertools, mimetypes, random
 import numpy as np
 
 @login_required
@@ -263,6 +263,7 @@ def setup(request):
 			# Extract form data
 			executionSystem = form.cleaned_data.get('executionSystem')
 			archiveSystem = form.cleaned_data.get('storageSystem')
+			samplingChoice = form.cleaned_data.get('samplingChoice')
 			geoFileName = ''
 			yamlFileName = ''
 
@@ -280,11 +281,14 @@ def setup(request):
 					for chunk in file.chunks():
 						destination.write(chunk)
 
+
+
 			return redirect(reverse('jobs-submit') + '?appId=' + appId 
 												   + '&archiveSystem=' + archiveSystem
 												   + '&executionSystem=' + executionSystem
 												   + '&geoFile=' + geoFileName
-												   + '&yamlFile=' + yamlFileName)
+												   + '&yamlFile=' + yamlFileName
+												   + '&samplingChoice=' + samplingChoice)
 	else:
 		form = JobSetupForm(inputs=inputs, availableSystems=availableSystems)
 
@@ -302,6 +306,7 @@ def submit(request):
 	yamlFileTemplate = request.GET.get('yamlFile','')
 	archiveSystem = request.GET.get('archiveSystem','')
 	executionSystem = request.GET.get('executionSystem','')
+	samplingChoice = request.GET.get('samplingChoice')
 	user = request.user
 	token = user.profile.accesstoken
 
@@ -330,13 +335,12 @@ def submit(request):
 	parameters = fileParameters + agaveParameters
 
 	if request.method == 'POST':
-		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters)
+		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters, samplingChoice=samplingChoice)
 		if form.is_valid():
 			print('Form is valid')
 			#Extract form data
 			name = form.cleaned_data.get('name')
 			email = form.cleaned_data.get('email')
-			sampling = form.cleaned_data.get('sampling')
 
 			# Set other job values
 			appId = appId
@@ -377,15 +381,24 @@ def submit(request):
 			# Prepare parameter space
 			space = []
 
-			if sampling == 'grid':
+			if samplingChoice == 'grid':
 				for parameter in parameters:
 					start = form.cleaned_data.get('sweepPara_%s_start' % parameter)
 					end = form.cleaned_data.get('sweepPara_%s_end' % parameter)
 					num = form.cleaned_data.get('sweepPara_%s_num' % parameter)
 					space.append([x for x in np.linspace(start=start, stop=end, num=num)])
 				space = list(itertools.product(*space))
-			elif sampling == 'random':
-				1/0
+				print(type(space))
+				print(type(space[0]))
+			elif samplingChoice == 'random':
+				start = []
+				end = []
+				num = form.cleaned_data.get('number')
+				for parameter in parameters:
+					start = form.cleaned_data.get('sweepPara_%s_start' % parameter)
+					end = form.cleaned_data.get('sweepPara_%s_end' % parameter)
+					space.append([random.uniform(start,end) for i in range(num)])
+				space = list(zip(*space))
 			else: # latin square
 				1/0
 			# Iterate through all parameter combination and submit a job for each
@@ -487,7 +500,9 @@ def submit(request):
 
 			return redirect('jobs-list')
 	else:
-		form = JobSubmitForm(parameters=parameters)
+		print('===')
+		print(samplingChoice)
+		form = JobSubmitForm(parameters=parameters, samplingChoice=samplingChoice)
 
 	context = {
 	'form': form,
