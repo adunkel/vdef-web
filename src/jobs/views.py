@@ -252,20 +252,17 @@ def setup(request):
 	response = agaveRequestAppDetails(user,appId)
 	inputs = response['result']['inputs']
 
-	# Get system option
-	response = agaveRequestSystemsList(user)
-	availableSystems = response['result']
+	geoFileName = ''
+	yamlFileName = ''
+	name = ''
+	samplingChoice = ''
 
 	if request.method == 'POST':
-		form = JobSetupForm(request.POST, request.FILES, inputs=inputs, availableSystems=availableSystems)
+		form = JobSetupForm(request.POST, request.FILES, inputs=inputs)
 		if form.is_valid():
-
-			# Extract form data
-			executionSystem = form.cleaned_data.get('executionSystem')
-			archiveSystem = form.cleaned_data.get('storageSystem')
+			name = form.cleaned_data.get('name')
 			samplingChoice = form.cleaned_data.get('samplingChoice')
-			geoFileName = ''
-			yamlFileName = ''
+			
 
 			# Save files to server
 			for key, value in request.FILES.items():
@@ -284,17 +281,20 @@ def setup(request):
 
 
 			return redirect(reverse('jobs-submit') + '?appId=' + appId 
-												   + '&archiveSystem=' + archiveSystem
-												   + '&executionSystem=' + executionSystem
+												   + '&name=' + name
 												   + '&geoFile=' + geoFileName
 												   + '&yamlFile=' + yamlFileName
 												   + '&samplingChoice=' + samplingChoice)
 	else:
-		form = JobSetupForm(inputs=inputs, availableSystems=availableSystems)
+		form = JobSetupForm(inputs=inputs)
 
 	context = {
 		'form': form,
 		'appId': appId,
+		'name': name,
+		'geoFileName': geoFileName,
+		'yamlFileName': yamlFileName,
+		'samplingChoice': samplingChoice,
 		'title': 'Submit Job'
 	}
 	return render(request, 'jobs/jobsubmit.html', context)
@@ -302,13 +302,16 @@ def setup(request):
 @login_required
 def submit(request):
 	appId = request.GET.get('appId','')
+	name = request.GET.get('name','')
 	geoFileTemplate = request.GET.get('geoFile','')
 	yamlFileTemplate = request.GET.get('yamlFile','')
-	archiveSystem = request.GET.get('archiveSystem','')
-	executionSystem = request.GET.get('executionSystem','')
 	samplingChoice = request.GET.get('samplingChoice')
 	user = request.user
 	token = user.profile.accesstoken
+
+	# Get system option
+	response = agaveRequestSystemsList(user)
+	availableSystems = response['result']
 
 	# Get parameters from templates
 	fileParameters = []
@@ -335,12 +338,12 @@ def submit(request):
 	parameters = fileParameters + agaveParameters
 
 	if request.method == 'POST':
-		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters, samplingChoice=samplingChoice)
+		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters, samplingChoice=samplingChoice, availableSystems=availableSystems)
 		if form.is_valid():
-			print('Form is valid')
 			#Extract form data
-			name = form.cleaned_data.get('name')
 			email = form.cleaned_data.get('email')
+			executionSystem = form.cleaned_data.get('executionSystem')
+			archiveSystem = form.cleaned_data.get('storageSystem')
 
 			# Set other job values
 			appId = appId
@@ -388,8 +391,6 @@ def submit(request):
 					num = form.cleaned_data.get('sweepPara_%s_num' % parameter)
 					space.append([x for x in np.linspace(start=start, stop=end, num=num)])
 				space = list(itertools.product(*space))
-				print(type(space))
-				print(type(space[0]))
 			elif samplingChoice == 'random':
 				start = []
 				end = []
@@ -500,13 +501,17 @@ def submit(request):
 
 			return redirect('jobs-list')
 	else:
-		print('===')
-		print(samplingChoice)
-		form = JobSubmitForm(parameters=parameters, samplingChoice=samplingChoice)
 
+		form = JobSubmitForm(parameters=parameters, samplingChoice=samplingChoice, availableSystems=availableSystems)
+
+	print('===',name)
 	context = {
 	'form': form,
 	'appId': appId,
+	'name': name,
+	'geoFileName': geoFileTemplate,
+	'yamlFileName': yamlFileTemplate,
+	'samplingChoice': samplingChoice,
 	'title': 'Submit Job'
 	}
 	return render(request, 'jobs/jobsubmit.html', context)

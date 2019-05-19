@@ -4,6 +4,19 @@
 	<form enctype="multipart/form-data" method="POST">
 		<fieldset class="form-group">
 			<legend class="border-bottom mb-4">Submit Job for {{ appId }}</legend>
+			{% if name %}
+				<p>Job Name: {{ name }}</p>
+			{% endif %}
+			{% if geoFileName %}
+				<p>Geo File: {{ geoFileName }}</p>
+			{% endif %}
+			{% if yamlFileName %}
+				<p>Yaml File: {{ yamlFileName }}</p>
+			{% endif %}
+			{% if samplingChoice %}
+				<p>Sampling Strategy: {{ samplingChoice }}</p>
+			{% endif %}
+
 			{% crispy form %}
 		</fieldset>
 	</form>
