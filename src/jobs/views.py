@@ -132,7 +132,6 @@ def getData(request,jobName):
 
 @login_required
 def getFile(request,jobId,fileName):
-	print(fileName)
 	user = request.user
 	jobResponse = agaveRequestJobSearch(user,jobId=jobId)
 	path = jobResponse['result'][0]['_links']['archiveData']['href']
@@ -262,7 +261,6 @@ def setup(request):
 		if form.is_valid():
 			name = form.cleaned_data.get('name')
 			samplingChoice = form.cleaned_data.get('samplingChoice')
-			
 
 			# Save files to server
 			for key, value in request.FILES.items():
@@ -278,7 +276,9 @@ def setup(request):
 					for chunk in file.chunks():
 						destination.write(chunk)
 
-
+			response = agaveRequestMetadataList(user,Q={'value.jobName':name})
+			if response['result']: # Job with this name already exists
+				messages.warning(request, 'A job with the name %s already exists. If you continue, the results will be merged.' % name)
 
 			return redirect(reverse('jobs-submit') + '?appId=' + appId 
 												   + '&name=' + name
@@ -504,7 +504,6 @@ def submit(request):
 
 		form = JobSubmitForm(parameters=parameters, samplingChoice=samplingChoice, availableSystems=availableSystems)
 
-	print('===',name)
 	context = {
 	'form': form,
 	'appId': appId,
