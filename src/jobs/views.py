@@ -359,8 +359,8 @@ def submit(request):
 			notificationURL = 'http://melete05.cct.lsu.edu/report?status=QUEUED&eventid='+appId+'&key='+user.username
 			notification = [{
 				'url':notificationURL,
-				# 'event':'QUEUED',
-				'event':'FINISHED',
+				'event':'QUEUED',
+				# 'event':'FINISHED',
 				'persistent':False
 			}]
 			agaveParameters = {key: 0 for key in agaveParameters}
