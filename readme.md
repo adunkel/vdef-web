@@ -57,7 +57,7 @@ $ systems-addupdate -F your_system_file.json
 ```
 
 ### Add an application to Agave
-To add an application to Agave, we need to define the application in a JSON file and create a wrapper. Here is an example [application](example_files/quenching-application.json) and [wrapper](quenching-wrapper.txt). Upload your application to Agave:
+To add an application to Agave, we need to define the application in a JSON file and create a wrapper. Here is an example [application](example_files/quenching-application.json) and [wrapper](example_files/quenching-wrapper.txt). Upload your application to Agave:
 ```sh
 $ apps-addupdate -F your_app_file.json
 ```
