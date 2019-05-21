@@ -1,0 +1,26 @@
+{
+   "id":"schur-storage-USERNAME",
+   "name":"schur storage (USERNAME)",
+   "status":"UP",
+   "type":"STORAGE",
+   "description":"The schur computer",
+   "site":"math.lsu.edu",
+   "storage":{
+      "host":"head2.schur.math.lsu.edu",
+      "port":22,
+      "protocol":"SFTP",
+      "rootDir":"/",
+      "homeDir":"/home1/USERNAME/",
+      "auth":{
+         "username":"USERNAME",
+         "publicKey":"YOUR PUBLIC KEY",
+         "privateKey":"-----BEGIN RSA PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,D2085EDC98D889386D1E9BC48FA2380A\n\nnspzgGbUojvzLaHoJjCVT6LfQDtKtJF6E2X6dADNt0FgFwrurGvzECmtV/W2RFva\nFhs56ZzX4n1lOl4y02aJQezLCCO8/wRNYmL1cHLC9OvYltyrDx1JSzz5X/CxBV/
+         ...
+         YOUR PRIVATE KEY
+         ...
+         oTzvsAyxW1o\nWNI5nsruUO0DbHsKJURi3kGkBD0plYv5y10a8cru4L+a2UG/Tten/+D3Z16DmHk3\n-----END RSA PRIVATE KEY-----",
+         "password":"YOUR PASSWORD",
+         "type": "SSHKEYS"
+      }
+   }
+}

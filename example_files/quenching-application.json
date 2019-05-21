@@ -1,0 +1,59 @@
+{  
+   "name":"quenching-schur",
+   "version":"1.0",
+   "label":"Quenching",
+   "shortDescription":"Runs the quenching example",
+   "longDescription":"",
+   "deploymentSystem":"schur-storage-fdunke1",
+   "deploymentPath":"agave-deployment/quenching",
+   "templatePath":"quenching-wrapper.txt",
+   "testPath":"quenching-wrapper.txt",
+   "executionSystem":"schur-execution-fdunke1",
+   "executionType":"HPC",
+   "parallelism":"PARALLEL",
+   "allocation":"hpc_our_group",
+   "modules":[],
+   "inputs":[  
+      {  
+         "id":"geoFile",
+         "details":{  
+            "label":"Geo File ",
+            "description":"File describing the geometry",
+            "argument":null,
+            "showArgument":false
+         },
+         "value":{  
+            "required":true,
+            "validator":"",
+            "visible":true
+         }
+      },
+      {  
+         "id":"yamlFile",
+         "details":{  
+            "label":"Yaml File ",
+            "description":"File describing the mechanical properties",
+            "argument":null,
+            "showArgument":false
+         },
+         "value":{  
+            "required":true,
+            "validator":"",
+            "visible":true
+         }
+      }
+   ],
+   "parameters":[
+      {
+         "id":"kappa",
+         "value":{  
+            "default":1,
+            "order":1,
+            "required":true,
+            "type":"number",
+            "validator":"",
+            "visible":true
+         }
+      }
+   ]
+}
