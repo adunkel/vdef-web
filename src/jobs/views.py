@@ -451,8 +451,8 @@ def submit(request):
 				time.sleep(2) # Pause time
 				agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
 
-				inputs['geoFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + geoFileName
-				inputs['yamlFile'] = 'agave://' + executionSystem + '//home1/fdunke1/' + location + '/' + yamlFileName
+				inputs['geoFile'] = 'agave://' + executionSystem + '/' + location + '/' + geoFileName
+				inputs['yamlFile'] = 'agave://' + executionSystem + '/' + location + '/' + yamlFileName
 				job['inputs'] = inputs
 
 				# Submit the job
