@@ -9,7 +9,7 @@
 						<div class="article-metadata">
 							<small class="text-muted">FINISHED {{ status.FINISHED }}, RUNNING {{ status.RUNNING }}, FAILED {{ status.FAILED }}</small>
 						</div>
-						<a href="{% url 'jobs-chart' name %}">{{ name }}</a>
+						<a href="{% url 'jobs-table' name %}">{{ name }}</a>
 						{# <button type="button" class="btn btn-sm" id="btn_refresh_{{ name }}">Refresh</button> #}
 					</div>
 				</article>

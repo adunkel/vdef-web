@@ -1,0 +1,30 @@
+{% extends "vDefAgave/base.html" %}
+
+{% block content %}
+	<div class="content-section">
+		<h1>{{ jobName }}</h1>
+		<table id="myTable"style="width:100%" class="table table-striped table-bordered table-sm">
+			{% for job in jobs %}
+				{% if forloop.first %}
+				<thead>
+					<tr>
+						<th>Job ID</th>
+						<th>{{ job.para1name }}</th>
+						<th>{{ job.para2name }}</th>
+						<th>Status</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% endif %}
+				<tr>
+					<td>{{ job.jobid }}</td>
+					<td>{{ job.para1value }}</td>
+					<td>{{ job.para2value }}</td>
+					<td>{{ job.status }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		<button onclick="window.location.href = '{% url 'jobs-chart' jobName %}';" type="button" id="btnPlot" class="btn btn-primary">View as plot</button>
+	</div>
+{% endblock content %}

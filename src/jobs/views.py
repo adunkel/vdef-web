@@ -28,6 +28,24 @@ def dataView(request):
 	return render(request, 'jobs/viewdata.html', context)
 
 @login_required
+def tableView(request,jobName):
+	user = request.user
+	updateJobDB(request,Q={"value.jobName":jobName})
+	jobsAsDict = []
+	jobs = user.job_set.filter(name=jobName)
+	if jobs:
+		for job in jobs:
+			jobsAsDict.append(job.__dict__)
+			getPicture(request,job.jobid)
+
+	# user.job_set.values_list('jobid', flat=True).distinct()
+	context = {
+		'jobName': jobName,
+		'jobs': jobsAsDict
+	}
+	return render(request, 'jobs/table.html', context)
+
+@login_required
 def chart(request,jobName):
 	context = {
 		'jobName': jobName
@@ -66,41 +84,17 @@ def getData(request,jobName):
 						'orange': ['255','140','0']}
 	colors = []
 	points = []
-	fileEnding = '_chart.json'
-	mediaPath = './src/media/'
-	mediaFolder = 'job_pictures/'
+	paraNames = []
 
 	user = request.user
 	updateJobDB(request,Q={"value.jobName":jobName})
 	jobs = user.job_set.filter(name=jobName)
+	if jobs:
+		for job in jobs:
+			getPicture(request,job.jobid)
+	jobs = user.job_set.filter(name=jobName)
 
 	if jobs:
-		# Download chart json and save to jobs model if needed
-		response = ''
-		paraNames = []
-
-		for job in jobs:
-			if job.status == 'FINISHED':
-				if job.picture == 'job_pictures/default.jpg':
-					jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
-					imageName = job.jobid + '.png'
-					path = jobResponse['result'][0]['_links']['archiveData']['href']
-					imageResponse = agaveRequestGetFile(user,path,imageName)
-					time.sleep(2) # Pause time
-					with open(mediaPath + mediaFolder + imageName, 'wb') as f:
-						f.write(imageResponse.content)
-					job.picture = mediaFolder + imageName
-				if job.color != 'blue':
-					job.color = 'blue'
-			elif job.status == 'RUNNING' and job.color != 'orange':
-				job.color = 'orange'
-			elif job.status == 'FAILED' and job.color != 'red':
-				job.color = 'red'
-			job.save()
-
-		# Prepare data for chart
-		jobs = user.job_set.filter(name=jobName)
-
 		for job in jobs:
 			if not paraNames:
 				paraNames = [job.para1name,job.para2name]
@@ -162,6 +156,22 @@ def output(request,jobId):
 	return JsonResponse(data)
 
 @login_required
+def getPicture(request,jobId):
+	mediaPath = './src/media/'
+	mediaFolder = 'job_pictures/'
+	user = request.user
+	job = user.job_set.filter(jobid=jobId).first()
+	if job.picture == 'job_pictures/default.jpg':
+		jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
+		imageName = job.jobid + '.png'
+		path = jobResponse['result'][0]['_links']['archiveData']['href']
+		imageResponse = agaveRequestGetFile(user,path,imageName)
+		with open(mediaPath + mediaFolder + imageName, 'wb') as f:
+			f.write(imageResponse.content)
+		job.picture = mediaFolder + imageName
+		job.save()
+
+@login_required
 def updateJobDB(request,Q={}):
 	"""Update the job database with metadata items
 	An option query Q can be given. Ex.: Q={"value.jobName": "myJobName"}
@@ -183,7 +193,13 @@ def updateJobDB(request,Q={}):
 				if job.status not in ['FINISHED']:
 					jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
 					status = jobResponse['result'][0]['status']
+					color = 'red'
+					if status == 'FINISHED':
+						color = 'blue'
+					elif status == 'RUNNING':
+						color = 'orange'
 					job.status = status
+					job.color = color
 					job.save()
 
 			# Create new job entries
@@ -193,6 +209,11 @@ def updateJobDB(request,Q={}):
 				myConsole(user, 'Creating job entry for ' + jobId)
 				jobResponse = agaveRequestJobSearch(user,jobId=jobId)
 				status = jobResponse['result'][0]['status']
+				color = 'red'
+				if status == 'FINISHED':
+					color = 'blue'
+				elif status == 'RUNNING':
+					color = 'orange'
 				para1value = value['paraValues'][jobId][para1name]
 				para2value = value['paraValues'][jobId][para2name]
 				Job(name=jobName,
@@ -203,7 +224,8 @@ def updateJobDB(request,Q={}):
 					para1value=para1value,
 					para2name=para2name,
 					para2value=para2value,
-					status=status).save()
+					status=status,
+					color=color).save()
 
 @login_required
 def jobSets(request):
