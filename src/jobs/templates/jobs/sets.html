@@ -1,0 +1,42 @@
+{% extends "vDefAgave/base.html" %}
+
+{% block content %}
+	<div class="row">
+		{% for name,status in jobs.items %}
+			<div class="col-md-4">
+				<article class="media content-section">
+					<div class="media-body">
+						<div class="article-metadata">
+							<small class="text-muted">FINISHED {{ status.FINISHED }}, RUNNING {{ status.RUNNING }}, FAILED {{ status.FAILED }}</small>
+						</div>
+						<a href="{% url 'jobs-chart' name %}">{{ name }}</a>
+						{# <button type="button" class="btn btn-sm" id="btn_refresh_{{ name }}">Refresh</button> #}
+					</div>
+				</article>
+			</div>
+		{% endfor %}
+	</div>
+{% endblock content %}
+
+<script>
+{% block jquery %}
+	// {% for name,status in jobs.items %}
+	// 	$("#btn_refresh_{{ name }}").click(function(){
+	// 		var r = confirm("Are you sure you want to refresh the data of {{ name }}?")
+	// 		if (r == true) {
+	// 			$.ajax({
+	// 				method: "GET",
+	// 				url: '/data/refresh/job/' + '{{ name }}',
+	// 				success: function(data){
+	// 					console.log('Refreshed')
+	// 				},
+	// 				error: function(error_data){
+	// 					console.log("error");
+	// 					console.log(error_data);
+	// 				}
+	// 			})
+	// 		}
+	// 	})
+	// {% endfor %}
+{% endblock jquery %}
+</script>

@@ -206,7 +206,7 @@ def updateJobDB(request,Q={}):
 					status=status).save()
 
 @login_required
-def listJobs(request):
+def jobSets(request):
 	user = request.user
 	jobStatus = []
 
@@ -240,7 +240,7 @@ def listJobs(request):
 	'jobs': jobs,
 	'title': 'Job List'
 	}
-	return render(request, 'jobs/joblist.html', context)
+	return render(request, 'jobs/sets.html', context)
 
 @login_required
 def setup(request):

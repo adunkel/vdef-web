@@ -13,7 +13,7 @@ class JobSearchForm(forms.Form):
 		self.helper.layout.append(Submit('submit', 'Submit'))
 
 class JobSetupForm(forms.Form):
-	name = forms.CharField(label='Job Name')
+	name = forms.CharField(label='Job-Set Name')
 	samplingChoices = [('grid', 'Grid'), ('random','Random'), ('latinSqaure','Latin Square')]
 	samplingChoice = forms.ChoiceField(label='Sampling Strategy', choices=samplingChoices, initial='grid')
 
