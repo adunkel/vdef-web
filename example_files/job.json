@@ -1,0 +1,23 @@
+{
+    "parameters": {
+    },
+    "archive": true,
+    "name": "vdef-test",
+    "maxRunTime": "00:10:00",
+    "appId": "vdef-schur-1.0",
+    "nodeCount": 1,
+    "batchQueue": "CLUSTER",
+    "inputs": {
+        "geoFile": "agave://schur-storage-fdunke1//home1/fdunke1/adunkel/input/20_1_ZoomedMeshTemplate.geo",
+        "yamlFile": "agave://schur-storage-fdunke1//home1/fdunke1/adunkel/input/20_1_ZoomedMeshTemplate.yaml"
+    },
+    "processorsPerNode": 1,
+    "archiveSystem": "schur-storage-fdunke1",
+    "notifications": [
+        {
+            "persistent": true,
+            "url": "fdunke1@lsu.edu",
+            "event": "FINISHED"
+        }
+    ]
+}
