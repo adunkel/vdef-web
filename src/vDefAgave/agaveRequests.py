@@ -302,6 +302,8 @@ def agaveRequestSubmitJob(user,data):
 									 params=params, 
 									 data=data, 
 									 verify=True)
+			print(response)
+			print(response.json())
 			if response['status'] == 'success':
 				jobId = response['result']['id']
 				myConsole(user, 'Successfully submitted job ' + jobId + ' to Agave.')
