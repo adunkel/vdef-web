@@ -70,6 +70,22 @@
 	function setChart(){
 		// Setup Chart
 		var ctx = document.getElementById("myChart").getContext('2d');
+		// Compute ranges
+		var yMin = Math.min.apply(null, points.map(function(item) {return item.y;}));
+		var yMax = Math.max.apply(null, points.map(function(item) {return item.y;}));
+		var xMin = Math.min.apply(null, points.map(function(item) {return item.x;}));
+		var xMax = Math.max.apply(null, points.map(function(item) {return item.x;}));
+		var yMargin = 1
+		var xMargin = 1
+		var yStepSize = 1
+		var xStepSize = 1
+		if (yMin != yMax) {
+			yMargin = (yMax - yMin)*0.1;
+		}
+		if (xMin != xMax) {
+			xMargin = (xMax - xMin)*0.1;
+		}
+
 		var myChart = new Chart(ctx, {
 			type: 'bubble',
 			data: {
@@ -80,6 +96,14 @@
 				}]
 			},
 			options: {
+				layout: {
+					padding: {
+					left: 10,
+					right: 15,
+					top: 15,
+					bottom: 10
+					}
+				},
 				legend:{
 					display: false
 				},
@@ -90,8 +114,8 @@
 							labelString: axisLabels[1]
 						},
 						ticks: {
-							min: Math.min.apply(null, points.map(function(item) {return item.y;})) - 2,
-							max: Math.max.apply(null, points.map(function(item) {return item.y;})) + 2,
+							// min: yMin - yMargin,
+							// max: yMax + yMargin,
 						}
 					}],
 					xAxes: [{ 
@@ -100,8 +124,8 @@
 							labelString: axisLabels[0]
 						},
 						ticks: {
-							min: Math.min.apply(null, points.map(function(item) {return item.x;})) - 2,
-							max: Math.max.apply(null, points.map(function(item) {return item.x;})) + 2,
+							// min: xMin - xMargin,
+							// max: xMax + xMargin,
 						}
 					}]
 				},
