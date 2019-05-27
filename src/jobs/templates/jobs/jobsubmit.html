@@ -13,6 +13,12 @@
 			{% if yamlFileName %}
 				<p>Yaml File: {{ yamlFileName }}</p>
 			{% endif %}
+			{% if executionSystem %}
+				<p>Execution System: {{ executionSystem }}</p>
+			{% endif %}
+			{% if archiveSystem %}
+				<p>Archive System: {{ archiveSystem }}</p>
+			{% endif %}
 			{% if samplingChoice %}
 				<p>Sampling Strategy: {{ samplingChoice }}</p>
 			{% endif %}

@@ -270,6 +270,13 @@ def setup(request):
 	appId = request.GET.get('appId','')
 	user = request.user
 
+	# Get system option
+	response = agaveRequestSystemsList(user)
+	availableSystems = response['result']
+	# print(availableSystems)
+	# for s in availableSystems:
+	# 	print(s)
+
 	# Get application parameter details
 	response = agaveRequestAppDetails(user,appId)
 	inputs = response['result']['inputs']
@@ -280,10 +287,12 @@ def setup(request):
 	samplingChoice = ''
 
 	if request.method == 'POST':
-		form = JobSetupForm(request.POST, request.FILES, inputs=inputs)
+		form = JobSetupForm(request.POST, request.FILES, inputs=inputs, availableSystems=availableSystems)
 		if form.is_valid():
 			name = form.cleaned_data.get('name')
 			samplingChoice = form.cleaned_data.get('samplingChoice')
+			executionSystem = form.cleaned_data.get('executionSystem')
+			archiveSystem = form.cleaned_data.get('storageSystem')
 
 			# Save files to server
 			for key, value in request.FILES.items():
@@ -307,9 +316,11 @@ def setup(request):
 												   + '&name=' + name
 												   + '&geoFile=' + geoFileName
 												   + '&yamlFile=' + yamlFileName
-												   + '&samplingChoice=' + samplingChoice)
+												   + '&samplingChoice=' + samplingChoice
+												   + '&executionSystem=' + executionSystem
+												   + '&archiveSystem=' + archiveSystem)
 	else:
-		form = JobSetupForm(inputs=inputs)
+		form = JobSetupForm(inputs=inputs, availableSystems=availableSystems)
 
 	context = {
 		'form': form,
@@ -329,12 +340,16 @@ def submit(request):
 	geoFileTemplate = request.GET.get('geoFile','')
 	yamlFileTemplate = request.GET.get('yamlFile','')
 	samplingChoice = request.GET.get('samplingChoice')
+	archiveSystem = request.GET.get('archiveSystem')
+	executionSystem = request.GET.get('executionSystem')
+
 	user = request.user
 	token = user.profile.accesstoken
 
-	# Get system option
-	response = agaveRequestSystemsList(user)
-	availableSystems = response['result']
+	queueChoices = []
+	systemResponse = agaveRequestSystemsList(user,executionSystem)
+	for queue in systemResponse['result']['queues']:
+		queueChoices.append(queue['name'])
 
 	# Get parameters from templates
 	fileParameters = []
@@ -361,19 +376,19 @@ def submit(request):
 	parameters = fileParameters + agaveParameters
 
 	if request.method == 'POST':
-		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters, samplingChoice=samplingChoice, availableSystems=availableSystems)
+		form = JobSubmitForm(request.POST, request.FILES, parameters=parameters, samplingChoice=samplingChoice, queueChoices=queueChoices)
 		if form.is_valid():
 			#Extract form data
 			email = form.cleaned_data.get('email')
 			executionSystem = form.cleaned_data.get('executionSystem')
 			archiveSystem = form.cleaned_data.get('storageSystem')
+			nodeCount = form.cleaned_data.get('nodeCount')
+			processorsPerNode = form.cleaned_data.get('processorsPerNode')
+			maxRunTime = form.cleaned_data.get('maxRunTime')
+			queue = form.cleaned_data.get('queue')
 
 			# Set other job values
 			appId = appId
-			batchQueue = 'normal'
-			maxRunTime = '08:00:00'
-			nodeCount = 1
-			processorsPerNode = 12
 			inputs = {
 				'geoFile': '',
 				'yamlFile': '',
@@ -393,7 +408,7 @@ def submit(request):
 				'name':name,
 				'appId': appId,
 				'executionSystem': executionSystem,
-				'batchQueue': batchQueue,
+				'batchQueue': queue,
 				'maxRunTime': maxRunTime,
 				'nodeCount': nodeCount,
 				'processorsPerNode': processorsPerNode,
@@ -522,8 +537,7 @@ def submit(request):
 
 			return redirect('jobs-job-sets')
 	else:
-
-		form = JobSubmitForm(parameters=parameters, samplingChoice=samplingChoice, availableSystems=availableSystems)
+		form = JobSubmitForm(parameters=parameters, samplingChoice=samplingChoice, queueChoices=queueChoices)
 
 	context = {
 	'form': form,
@@ -532,6 +546,8 @@ def submit(request):
 	'geoFileName': geoFileTemplate,
 	'yamlFileName': yamlFileTemplate,
 	'samplingChoice': samplingChoice,
+	'archiveSystem': archiveSystem,
+	'executionSystem': executionSystem,
 	'title': 'Submit Job'
 	}
 	return render(request, 'jobs/jobsubmit.html', context)

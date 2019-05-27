@@ -262,7 +262,7 @@ def agaveRequestJobsOutputList(user,jobId):
 							verify=True)
 	return response.json()
 
-def agaveRequestSystemsList(user):
+def agaveRequestSystemsList(user,system=''):
 	"""List available systems.
 	Agave CLI: systems-list -V
 	"""
@@ -271,7 +271,7 @@ def agaveRequestSystemsList(user):
 
 	headers = {'Authorization': 'Bearer ' + token}
 	params = (('pretty', 'true'),)
-	response = requests.get(BASEURL + 'systems/v2/', 
+	response = requests.get(BASEURL + 'systems/v2/' + system, 
 							headers=headers, 
 							params=params, 
 							verify=True)
