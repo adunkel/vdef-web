@@ -196,8 +196,9 @@ def updateJobDB(request,Q={}):
 					color = 'red'
 					if status == 'FINISHED':
 						color = 'blue'
-					elif status == 'RUNNING':
+					elif status not in ['FINISHED','FAILED','STOPPED']: # Running
 						color = 'orange'
+					# else failed or stopped (color = 'red')
 					job.status = status
 					job.color = color
 					job.save()
@@ -260,7 +261,7 @@ def jobSets(request):
 	
 	context = {
 	'jobs': jobs,
-	'title': 'Job List'
+	'title': 'Job-Sets'
 	}
 	return render(request, 'jobs/sets.html', context)
 
@@ -369,7 +370,7 @@ def submit(request):
 
 			# Set other job values
 			appId = appId
-			batchQueue = 'CLUSTER'
+			batchQueue = 'normal'
 			maxRunTime = '08:00:00'
 			nodeCount = 1
 			processorsPerNode = 12
@@ -400,7 +401,7 @@ def submit(request):
 				'parameters': agaveParameters,
 				'archive': archive,
 				'archiveSystem': archiveSystem,
-				'notifications': notification
+				# 'notifications': notification
 			}
 
 			# Prepare parameter space
@@ -470,7 +471,7 @@ def submit(request):
 				# Upload file to agave
 				location = user.username + '/input'
 				agaveRequestUploadFile(user,geoFile, geoFileName, archiveSystem,location)
-				time.sleep(2) # Pause time
+				# time.sleep(2) # Pause time
 				agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
 
 				inputs['geoFile'] = 'agave://' + executionSystem + '/' + location + '/' + geoFileName
@@ -479,19 +480,21 @@ def submit(request):
 
 				# Submit the job
 				response = {'fault': True}
-				waitResponse = {appId: None}
+				# waitResponse = {appId: None}
+				waitResponse = {appId: 'something'}
 				attempts = 1
 				while (('fault' in response) or (waitResponse[appId] == None)) and attempts <= 3:
-					time.sleep(5) # Pause time
+					# time.sleep(5) # Pause time
 					response = agaveRequestSubmitJob(user,json.dumps(job))
 
 					if 'status' in response:
 						if response['status'] == 'success':
 							jobId = response['result']['id']
+							myConsole(user, 'Job ' + jobId + ' submitted to Agave successfully')
 							
-							myConsole(user, 'Waiting on job ' + jobId + ' to queue.')
-							waitResponse = waitForIt(appId,user.username)
-							myConsole(user, waitResponse)
+							# myConsole(user, 'Waiting on job ' + jobId + ' to queue.')
+							# waitResponse = waitForIt(appId,user.username)
+							# myConsole(user, waitResponse)
 							if waitResponse[appId] == None:
 								agaveRequestStopJob(user,jobId)
 							else:
@@ -502,11 +505,7 @@ def submit(request):
 							failedJobs.append(response['message'])
 					attempts += 1
 
-				time.sleep(10) # Pause time
-				# Pause time between jobs
-				# for i in reversed(range(10)):
-				# 	print('Time ' + str(i*10))
-				# 	time.sleep(10)
+				# time.sleep(10) # Pause time
 
 			if len(jobIds) > 0:
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
@@ -521,7 +520,7 @@ def submit(request):
 			if os.path.exists(yamlFileTemplate):
 				os.remove(yamlFileTemplate)
 
-			return redirect('jobs-list')
+			return redirect('jobs-job-sets')
 	else:
 
 		form = JobSubmitForm(parameters=parameters, samplingChoice=samplingChoice, availableSystems=availableSystems)

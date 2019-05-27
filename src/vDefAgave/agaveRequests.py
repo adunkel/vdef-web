@@ -303,7 +303,8 @@ def agaveRequestSubmitJob(user,data):
 									 data=data, 
 									 verify=True)
 			print(response)
-			print(response.json())
+			response = response.json()
+			print(response)
 			if response['status'] == 'success':
 				jobId = response['result']['id']
 				myConsole(user, 'Successfully submitted job ' + jobId + ' to Agave.')
@@ -311,7 +312,7 @@ def agaveRequestSubmitJob(user,data):
 				myConsole(user, 'Job was not submitted succesfully.')
 		except:
 			myConsole(user, 'Error - trying again')
-	return response.json()
+	return response
 
 def agaveRequestAppDetails(user,appid):
 	"""Get the details of an application.
