@@ -380,8 +380,8 @@ def submit(request):
 		if form.is_valid():
 			#Extract form data
 			email = form.cleaned_data.get('email')
-			executionSystem = form.cleaned_data.get('executionSystem')
-			archiveSystem = form.cleaned_data.get('storageSystem')
+			# executionSystem = form.cleaned_data.get('executionSystem')
+			# archiveSystem = form.cleaned_data.get('storageSystem')
 			nodeCount = form.cleaned_data.get('nodeCount')
 			processorsPerNode = form.cleaned_data.get('processorsPerNode')
 			maxRunTime = form.cleaned_data.get('maxRunTime')
