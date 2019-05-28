@@ -70,6 +70,8 @@ def agaveRequestMkdir(user,system,path):
 
 		data = {'action': 'mkdir', 'path': folder}
 		urlExt = 'files/v2/media/system/' + system + '/' + path
+		print(urlExt)
+		print(data)
 		response = agaveRequestPut(urlExt=urlExt, headers=headers, params=params, data=data)
 	return response.json()
 
