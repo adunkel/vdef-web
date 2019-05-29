@@ -33,6 +33,9 @@ def appPemsUpdate(request,appId,updateUser,perm):
 def appPemsList(request,appId):
 	user = request.user
 	response = agaveRequestAppPemsList(user,appId)
+	appResponse = agaveRequestAppDetails(user,appId)
+	response['owner'] = appResponse['result']['owner']
+	print(response)
 	return JsonResponse(response)
 
 @login_required
@@ -56,6 +59,7 @@ def apps(request):
 		'form': form,
 		'permForm': permForm,
 		'apps': json.dumps(apps),
+		'thisUser': user.username,
 		'title': 'Apps'
 	}
 	return render(request, 'vDefAgave/apps.html', context)

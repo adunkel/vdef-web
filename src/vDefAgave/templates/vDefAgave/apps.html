@@ -13,7 +13,7 @@
 			<h3><a id="label" class="article-title" href="{% url 'jobs-setup' %}?appId=appid"></a></h3>
 			<p id="description" class="article-content"></p>
 			<p id="permissions"></p>
-			<div class="permissionsSection">
+			<div class="permissionsSection" id="permissionsSection">
 				Grant Permission
 				<form method="POST">
 					{% crispy permForm %}
@@ -78,17 +78,28 @@
 			success: function(data){
 				var users = data.result;
 				perms = []
-				users.forEach(function(user) {
-					perm = user.username + ' (';
-					if (user.permission.read) {perm += 'r';} else {perm += '-'}
-					if (user.permission.write) {perm += 'w';} else {perm += '-'}
-					if (user.permission.execute) {perm += 'x';} else {perm += '-'}
-					perm += ')';
-					perms.push(perm);
-				})
+				if (typeof users != 'undefined') { // if not a public app
+					users.forEach(function(user) {
+						perm = user.username + ' (';
+						if (user.permission.read) {perm += 'r';} else {perm += '-'}
+						if (user.permission.write) {perm += 'w';} else {perm += '-'}
+						if (user.permission.execute) {perm += 'x';} else {perm += '-'}
+						perm += ')';
+						perms.push(perm);
+					})
+				}
 				perms = perms.join(', ');
 				var permissionsEl = document.getElementById('permissions');
 				permissionsEl.innerHTML = 'Permissions: ' + perms;
+
+				// Disable permissionsSection if user is not the owner
+				var permissionsSectionEl = document.getElementById('permissionsSection');
+
+				if (data.owner == '{{ thisUser }}') {
+					permissionsSectionEl.style.display = '';
+				} else {
+					permissionsSectionEl.style.display = 'none';
+				}
 			},
 			error: function(error_data){
 				console.log("error");
