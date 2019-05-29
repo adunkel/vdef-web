@@ -20,6 +20,7 @@ def systemRoleUpdate(request,systemId,updateUser,role):
 def systemRolesList(request,systemId):
 	user = request.user
 	response = agaveRequestSystemsRolesList(user,systemId)
+	print(response)
 	return JsonResponse(response)
 
 @login_required
@@ -74,6 +75,7 @@ def systems(request):
 		'dropdownForm': dropdownForm,
 		'roleForm': roleForm,
 		'systems': json.dumps(systems),
+		'user': user.username,
 		'title': 'Systems'
 	}
 	return render(request, 'vDefAgave/systems.html', context)

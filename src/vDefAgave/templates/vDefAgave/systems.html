@@ -14,7 +14,7 @@
 			<h3 class="article-title" id="name"></h3>
 			<p id="description" class="article-content"></p>
 			<p id="rolesList"></p>
-			<div class="permissionsSection">
+			<div class="permissionsSection" id="permissionsSection">
 				Grant Role
 				<form method="POST">
 					{% crispy roleForm %}
@@ -92,6 +92,17 @@
 				roles = roles.join(', ');
 				var rolesListEl = document.getElementById('rolesList');
 				rolesListEl.innerHTML = 'Roles: ' + roles;
+
+				// Disable permissionsSection if user is not the owner
+				var thisUser = users.find(function(element) {
+					return element['username'] == '{{ user }}';
+				});
+				var permissionsSectionEl = document.getElementById('permissionsSection');
+				if (thisUser.role == 'OWNER') {
+					permissionsSectionEl.style.display = '';
+				} else {
+					permissionsSectionEl.style.display = 'none';
+				}
 			},
 			error: function(error_data){
 				console.log("error");
