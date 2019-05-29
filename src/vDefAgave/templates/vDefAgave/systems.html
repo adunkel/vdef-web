@@ -44,6 +44,7 @@
 		var system = systems.find(function(element) {
 			return element['id'] == systemId;
 		});
+		console.log(system)
 
 		// Set innerHTML
 		var systemIdEl = document.getElementById('systemId');
@@ -67,8 +68,14 @@
 
 		var descriptionEl = document.getElementById('description');
 		descriptionEl.innerHTML = system['description'];
-		// var El = document.getElementById('');
-		// El.innerHTML = system[''];
+		
+		// Check Guest radio button and disable Publisher button is needed
+		$("#id_id_role_1").prop("checked", true);
+		if (system.type == 'STORAGE') {
+			document.getElementById('id_id_role_3').disabled = true;
+		} else {
+			document.getElementById('id_id_role_3').disabled = false;
+		}
 
 		// Get roles
 		var endpoint = '/systems/roles/' + systemId;

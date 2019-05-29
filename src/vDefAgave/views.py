@@ -66,8 +66,6 @@ def systems(request):
 	response = agaveRequestSystemsList(user)
 
 	systems = response['result']
-	# print(systems)
-	# print(json.dumps())
 
 	roleForm = SystemsGrantRole()
 	dropdownForm = SystemsDropdownForm(systems=systems)
