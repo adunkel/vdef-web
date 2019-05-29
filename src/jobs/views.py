@@ -161,7 +161,7 @@ def getPicture(request,jobId):
 	mediaFolder = 'job_pictures/'
 	user = request.user
 	job = user.job_set.filter(jobid=jobId).first()
-	if job.picture == 'job_pictures/default.jpg':
+	if job.picture == 'job_pictures/default.jpg' and job.status == 'FINISHED':
 		jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
 		imageName = job.jobid + '.png'
 		path = jobResponse['result'][0]['_links']['archiveData']['href']
