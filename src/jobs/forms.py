@@ -124,5 +124,23 @@ class JobSubmitForm(forms.Form):
 			self.helper.layout.append(Field('number'))
 			self.helper[len(self.helper)-1:].wrap(Column, css_class='col-md-4')
 			self.helper[len(self.helper)-1:].wrap_together(Row, css_class='form_row')
+		else: # 'latinSquare'
+			for parameter in parameters:
+				self.fields['sweepPara_{parameter}_start'.format(parameter=parameter)] = forms.FloatField(label= '', required=True)
+				self.fields['sweepPara_{parameter}_end'.format(parameter=parameter)] = forms.FloatField(label='', required=True)
+
+				self.helper.layout.append(Field(PrependedText('sweepPara_{parameter}_start'.format(parameter=parameter), 'Start')))
+				self.helper.layout.append(Field(PrependedText('sweepPara_{parameter}_end'.format(parameter=parameter), 'End')))
+
+				self.helper[len(self.helper)-2:].wrap(Column, css_class='col-md-4')
+				self.helper[len(self.helper)-2:].wrap_together(Row, css_class='form_row')
+				self.helper[len(self.helper)-1].wrap_together(Fieldset, parameter)
+
+			self.fields['size'] = forms.IntegerField(label='Latin square size', required=True)
+			self.fields['number'] = forms.IntegerField(label='Jobs per row and column')
+			self.helper.layout.append(Field('size'))
+			self.helper.layout.append(Field('number'))
+			self.helper[len(self.helper)-2:].wrap(Column, css_class='col-md-4')
+			self.helper[len(self.helper)-2:].wrap_together(Row, css_class='form_row')
 		
 		self.helper.layout.append(Submit('submit', 'Submit'))

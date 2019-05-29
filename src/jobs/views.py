@@ -273,9 +273,6 @@ def setup(request):
 	# Get system option
 	response = agaveRequestSystemsList(user)
 	availableSystems = response['result']
-	# print(availableSystems)
-	# for s in availableSystems:
-	# 	print(s)
 
 	# Get application parameter details
 	response = agaveRequestAppDetails(user,appId)
@@ -380,8 +377,6 @@ def submit(request):
 		if form.is_valid():
 			#Extract form data
 			email = form.cleaned_data.get('email')
-			# executionSystem = form.cleaned_data.get('executionSystem')
-			# archiveSystem = form.cleaned_data.get('storageSystem')
 			nodeCount = form.cleaned_data.get('nodeCount')
 			processorsPerNode = form.cleaned_data.get('processorsPerNode')
 			maxRunTime = form.cleaned_data.get('maxRunTime')
@@ -439,7 +434,15 @@ def submit(request):
 					space.append([random.uniform(start,end) for i in range(num)])
 				space = list(zip(*space))
 			else: # latin square
-				1/0
+				size = form.cleaned_data.get('size')
+				num = form.cleaned_data.get('number')
+				for parameter in parameters:
+					start = form.cleaned_data.get('sweepPara_%s_start' % parameter)
+					end = form.cleaned_data.get('sweepPara_%s_end' % parameter)
+					space.append([x for x in np.linspace(start=start, stop=end, num=size)])
+				space = list(itertools.product(*space))
+				ls = latinSquare(size,num)
+				space = [space[i] for i in range(size*size) if ls[i] == 1]
 			# Iterate through all parameter combination and submit a job for each
 			jobIds = []
 			failedJobs = []
@@ -505,11 +508,12 @@ def submit(request):
 					if 'status' in response:
 						if response['status'] == 'success':
 							jobId = response['result']['id']
-							myConsole(user, 'Job ' + jobId + ' submitted to Agave successfully')
 							
-							# myConsole(user, 'Waiting on job ' + jobId + ' to queue.')
-							# waitResponse = waitForIt(appId,user.username)
-							# myConsole(user, waitResponse)
+							# Wait on job to queue
+							# myConsole(user, 'Waiting on job ' + jobId + ' to queue.')#
+							# waitResponse = waitForIt(appId,user.username)#
+							# myConsole(user, waitResponse)#
+
 							if waitResponse[appId] == None:
 								agaveRequestStopJob(user,jobId)
 							else:
@@ -551,3 +555,20 @@ def submit(request):
 	'title': 'Submit Job'
 	}
 	return render(request, 'jobs/jobsubmit.html', context)
+
+def latinSquare(n,k):
+	# Create a latin square
+	ls = [[0]*n for _ in range(n)]
+	for i in range(k):
+	    for j in range(n):
+	        ls[(j+i)%n][j] = 1
+
+	# permute rows and columns
+	random.shuffle(ls)
+	ls = list(map(list, zip(*ls)))
+	random.shuffle(ls)
+
+	# Turn list of list into one list
+	ls = [i for row in ls for i in row]
+	print(ls)
+	return ls

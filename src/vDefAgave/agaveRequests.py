@@ -218,6 +218,7 @@ def agaveRequestGetFile(user,path,fileName):
 	path = re.sub('listings','media',path)
 
 	link = path + '/' + fileName
+	myConsole(user,'Getting file ' + link)
 	response = None
 	while response is None:
 		try:
@@ -225,7 +226,7 @@ def agaveRequestGetFile(user,path,fileName):
 									headers=headers, 
 									verify=True)
 		except:
-			print('===Error===')
+			myConsole(user,response)
 	return response
 
 def agaveRequestJobSearch(user,jobName='',jobId=''):
