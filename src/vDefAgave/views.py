@@ -75,7 +75,7 @@ def systems(request):
 		'dropdownForm': dropdownForm,
 		'roleForm': roleForm,
 		'systems': json.dumps(systems),
-		'user': user.username,
+		'thisUser': user.username,
 		'title': 'Systems'
 	}
 	return render(request, 'vDefAgave/systems.html', context)

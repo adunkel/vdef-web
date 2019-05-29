@@ -44,7 +44,6 @@
 		var system = systems.find(function(element) {
 			return element['id'] == systemId;
 		});
-		console.log(system)
 
 		// Set innerHTML
 		var systemIdEl = document.getElementById('systemId');
@@ -95,7 +94,7 @@
 
 				// Disable permissionsSection if user is not the owner
 				var thisUser = users.find(function(element) {
-					return element['username'] == '{{ user }}';
+					return element['username'] == '{{ thisUser }}';
 				});
 				var permissionsSectionEl = document.getElementById('permissionsSection');
 				if (thisUser.role == 'OWNER') {
