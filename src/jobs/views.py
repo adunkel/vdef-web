@@ -10,7 +10,7 @@ from vDefAgave.agaveRequests import *
 from .forms import JobSubmitForm, JobSearchForm, JobSetupForm
 from .models import Job
 import json, requests, os, re, time, itertools, mimetypes, random
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import numpy as np
 
 @login_required
@@ -449,7 +449,7 @@ def submit(request):
 			paraValues = []
 
 			poolArgs = [(dict(zip(parameters,s)),user,agaveParameters,geoFileTemplate,yamlFileTemplate,job) for s in space]
-			with Pool() as pool:
+			with Pool(cpu_count()*4) as pool:
 				responses = pool.starmap(submitJob, poolArgs)
 
 			for i,response in enumerate(responses):
