@@ -3,6 +3,15 @@ from django.contrib.auth.models import User
 from datetime import timedelta 
 from django.utils import timezone
 import re, json
+import logging, logging.config, sys
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter('[%(asctime)s %(processName)s] %(message)s','%d/%b/%Y %H:%M:%S')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 # BASEURL = 'https://public.agaveapi.co/'
 BASEURL = 'https://api.tacc.utexas.edu/'
@@ -24,7 +33,7 @@ def agaveRequestGet(urlExt, headers, params):
 									 params=params, 
 									 verify=True)
 		except:
-			print('Agave request error. Attempt', attempts)
+			logger.exeption('Agave request error. Attempt {}'.format(attempts))
 	return response
 
 def agaveRequestPost(urlExt, headers, params, data):
@@ -38,7 +47,7 @@ def agaveRequestPost(urlExt, headers, params, data):
 									 data=data,
 									 verify=True)
 		except:
-			print('Agave request error. Attempt', attempts)
+			logger.exeption('Agave request error. Attempt {}'.format(attempts))
 	return response
 
 def agaveRequestPut(urlExt, headers, params, data):
@@ -52,7 +61,7 @@ def agaveRequestPut(urlExt, headers, params, data):
 									 data=data,
 									 verify=True)
 		except:
-			print('Agave request error. Attempt', attempts)
+			logger.exeption('Agave request error. Attempt {}'.format(attempts))
 	return response
 
 def agaveRequestMkdir(user,system,path):
@@ -62,16 +71,14 @@ def agaveRequestMkdir(user,system,path):
 	"""
 	token,headers,params = agaveRequestCommon(user)
 	splitpath = path.split('/')
-	myConsole(user,'Creating folder: ' + path + ' on ' + system)
+	logger.info('Creating folder: ' + path + ' on ' + system)
 	for i in range(len(splitpath)):
 		folder = splitpath[i]
 		path = '/'.join(splitpath[0:i])
-		myConsole(user,'    ' + path + '/' + folder)
+		logger.info('    ' + path + '/' + folder)
 
 		data = {'action': 'mkdir', 'path': folder}
 		urlExt = 'files/v2/media/system/' + system + '/' + path
-		print(urlExt)
-		print(data)
 		response = agaveRequestPut(urlExt=urlExt, headers=headers, params=params, data=data)
 	return response.json()
 
@@ -173,9 +180,9 @@ def agaveRequestMetadataUpdate(user,jobIds,jobName,templates,parameters,paraValu
 							 verify=True)
 	response = response.json()
 	if response['status'] == 'success':
-		myConsole(user, 'Metadata ' + response['result']['uuid'] + ' submitted for the jobs: ' + ', '.join(jobIds))
+		logging.info('Metadata ' + response['result']['uuid'] + ' submitted for the jobs: ' + ', '.join(jobIds))
 	else:
-		myConsole(user, 'Metadata was not submitted successfully.')
+		logging.warning('Metadata was not submitted successfully.')
 	return response
 
 def agaveRequestUploadFile(user,data,fileName,system,location):
@@ -192,7 +199,7 @@ def agaveRequestUploadFile(user,data,fileName,system,location):
 		'fileName': (None, fileName),
 	}
 
-	myConsole(user,'Uploading file: ' + fileName + ' to ' + system + ':' + location)
+	logger.info('Uploading file: ' + fileName + ' to ' + system + ':' + location)
 	response = None
 	while response is None:
 		try:
@@ -205,9 +212,8 @@ def agaveRequestUploadFile(user,data,fileName,system,location):
 			if response['status'] != 'success':
 				agaveRequestMkdir(user,system,location)
 				response = None
-
 		except:
-			myConsole(user,'ERROR - trying again')
+			logger.exception('ERROR - trying again')
 	return response
 
 def agaveRequestGetFile(user,path,fileName):
@@ -218,7 +224,7 @@ def agaveRequestGetFile(user,path,fileName):
 	path = re.sub('listings','media',path)
 
 	link = path + '/' + fileName
-	myConsole(user,'Getting file ' + link)
+	logger.info('Getting file ' + link)
 	response = None
 	while response is None:
 		try:
@@ -226,7 +232,7 @@ def agaveRequestGetFile(user,path,fileName):
 									headers=headers, 
 									verify=True)
 		except:
-			myConsole(user,response)
+			logger.exception(response)
 	return response
 
 def agaveRequestJobSearch(user,jobName='',jobId=''):
@@ -297,7 +303,7 @@ def agaveRequestSubmitJob(user,data):
 	data = data
 
 	response = None
-	myConsole(user,'Submitting job...')
+	logger.info('Submitting job...')
 	while response is None:
 		try:
 			response = requests.post(BASEURL + 'jobs/v2/', 
@@ -305,15 +311,14 @@ def agaveRequestSubmitJob(user,data):
 									 params=params, 
 									 data=data, 
 									 verify=True)
-			print(response)
 			response = response.json()
 			if response['status'] == 'success':
 				jobId = response['result']['id']
-				myConsole(user, 'Successfully submitted job ' + jobId + ' to Agave.')
+				logger.info('Successfully submitted job ' + jobId + ' to Agave.')
 			else:
-				myConsole(user, 'Job was not submitted succesfully.')
+				logger.info(user, 'Job was not submitted succesfully.')
 		except:
-			myConsole(user, 'Error - trying again')
+			logger.exeption('Error - trying again')
 	return response
 
 def agaveRequestAppDetails(user,appid):
@@ -432,7 +437,7 @@ def agaveRequestStopJob(user,jobId):
 	"""Stop a job
 	Agave CLI: jobs-stop jobid
 	"""
-	myConsole(user, 'Stopping job ' + jobId)
+	logger.info('Stopping job ' + jobId)
 	user = checkAuth(user)
 	token = user.profile.accesstoken
 	
@@ -445,7 +450,6 @@ def agaveRequestStopJob(user,jobId):
 								params=params, 
 								data=data, 
 								verify=True)
-	print(response.json())
 	return response.json()
 
 def checkAuth(user):
@@ -477,8 +481,3 @@ def waitForIt(eventid,key):
 	else:
 		result = response.json()
 	return result
-
-def myConsole(user,string):
-	now = timezone.now()
-	pre = '[' + now.strftime("%Y/%m/%d %H:%M:%S") + ' ' + user.username + '] '
-	print(pre,string)

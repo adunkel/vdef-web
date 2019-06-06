@@ -20,7 +20,6 @@ def systemRoleUpdate(request,systemId,updateUser,role):
 def systemRolesList(request,systemId):
 	user = request.user
 	response = agaveRequestSystemsRolesList(user,systemId)
-	print(response)
 	return JsonResponse(response)
 
 @login_required
@@ -35,7 +34,6 @@ def appPemsList(request,appId):
 	response = agaveRequestAppPemsList(user,appId)
 	appResponse = agaveRequestAppDetails(user,appId)
 	response['owner'] = appResponse['result']['owner']
-	print(response)
 	return JsonResponse(response)
 
 @login_required

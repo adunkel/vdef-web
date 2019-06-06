@@ -208,7 +208,6 @@ def updateJobDB(request,Q={}):
 			jobsInDB = [job.jobid for job in Job.objects.filter(name=jobName)]
 			jobsNotInDB = (set(jobsInDB) ^ set(metadata['associationIds'])) & set(metadata['associationIds'])
 			for jobId in jobsNotInDB:
-				myConsole(user, 'Creating job entry for ' + jobId)
 				jobResponse = agaveRequestJobSearch(user,jobId=jobId)
 				status = jobResponse['result'][0]['status']
 				color = 'red'
@@ -568,5 +567,4 @@ def latinSquare(n,k):
 
 	# Turn list of list into one list
 	ls = [i for row in ls for i in row]
-	print(ls)
 	return ls
