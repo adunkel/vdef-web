@@ -10,6 +10,7 @@ from vDefAgave.agaveRequests import *
 from .forms import JobSubmitForm, JobSearchForm, JobSetupForm
 from .models import Job
 import json, requests, os, re, time, itertools, mimetypes, random
+from multiprocessing import Pool
 import numpy as np
 
 @login_required
@@ -447,84 +448,20 @@ def submit(request):
 			jobIds = []
 			failedJobs = []
 			paraValues = []
-			for paraCombination in space:
-				paraDict = dict(zip(parameters,paraCombination))
 
-				# Substitute agave parameters
-				agaveParameters = {key: paraDict[key] for key in agaveParameters}
-				job['parameters'] = agaveParameters
+			poolArgs = [(dict(zip(parameters,s)),user,agaveParameters,geoFileTemplate,yamlFileTemplate,job) for s in space]
+			with Pool() as pool:
+				responses = pool.starmap(submitJob, poolArgs)
 
-				# Create name for geo and yaml file
-				templateSplit = geoFileTemplate.rsplit('.',1)
-				geoFileName = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
-				templateSplit = yamlFileTemplate.rsplit('.',1)
-				yamlFileName = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
+			for i,response in enumerate(responses):
+				if 'status' in response:
+					if response['status'] == 'success':
+						jobId = response['result']['id']
 
-				# Substitute value into geo template 
-				geoFile = '' #'//' + str(paraDict) + '\n'
-				with open(geoFileTemplate,'r') as templateFile:
-					for line in templateFile.readlines():
-						g = re.search(r'{{(\w+)}}',line)
-						if g:
-							start = line[0:g.start()]
-							end = line[g.end():]
-							var = g.group(1)
-							geoFile += (start + str(paraDict[var]) + end)
-						else:
-							geoFile += line
-
-				# Substitute value into yaml template 
-				yamlFile = ''
-				with open(yamlFileTemplate,'r') as templateFile:
-					for line in templateFile.readlines():
-						g = re.search(r'{{(\w+)}}',line)
-						if g:
-							start = line[0:g.start()]
-							end = line[g.end():]
-							var = g.group(1)
-							yamlFile += (start + str(paraDict[var]) + end)
-						else:
-							yamlFile += line
-
-				# Upload file to agave
-				location = user.username + '/input'
-				agaveRequestUploadFile(user,geoFile, geoFileName, archiveSystem,location)
-				# time.sleep(2) # Pause time
-				agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
-
-				inputs['geoFile'] = 'agave://' + executionSystem + '/' + location + '/' + geoFileName
-				inputs['yamlFile'] = 'agave://' + executionSystem + '/' + location + '/' + yamlFileName
-				job['inputs'] = inputs
-
-				# Submit the job
-				response = {'fault': True}
-				# waitResponse = {appId: None}
-				waitResponse = {appId: 'something'}
-				attempts = 1
-				while (('fault' in response) or (waitResponse[appId] == None)) and attempts <= 3:
-					# time.sleep(5) # Pause time
-					response = agaveRequestSubmitJob(user,json.dumps(job))
-
-					if 'status' in response:
-						if response['status'] == 'success':
-							jobId = response['result']['id']
-							
-							# Wait on job to queue
-							# myConsole(user, 'Waiting on job ' + jobId + ' to queue.')#
-							# waitResponse = waitForIt(appId,user.username)#
-							# myConsole(user, waitResponse)#
-
-							if waitResponse[appId] == None:
-								agaveRequestStopJob(user,jobId)
-							else:
-								jobIds.append(jobId)
-								paraValues.append(paraDict)
-								# exit while loop
-						else:
-							failedJobs.append(response['message'])
-					attempts += 1
-
-				# time.sleep(10) # Pause time
+						jobIds.append(jobId)
+						paraValues.append(dict(zip(parameters,space[i])))
+					else:
+						failedJobs.append(response['message'])
 
 			if len(jobIds) > 0:
 				messages.success(request, 'Successfully submitted %d job(s) with the ids %s.' % (len(jobIds),jobIds))
@@ -555,6 +492,67 @@ def submit(request):
 	'title': 'Submit Job'
 	}
 	return render(request, 'jobs/jobsubmit.html', context)
+
+def sum_square(number,start,end):
+    s = 0
+    for i in range(number):
+        s += i * i
+    return s,start,end
+
+def submitJob(paraDict,user,agaveParameters,geoFileTemplate,yamlFileTemplate,job):
+	# Substitute agave parameters
+	agaveParameters = {key: paraDict[key] for key in agaveParameters}
+	job['parameters'] = agaveParameters
+
+	# Create name for geo and yaml file
+	templateSplit = geoFileTemplate.rsplit('.',1)
+	geoFileName = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
+	templateSplit = yamlFileTemplate.rsplit('.',1)
+	yamlFileName = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
+
+	# Substitute value into geo template 
+	geoFile = '' #'//' + str(paraDict) + '\n'
+	with open(geoFileTemplate,'r') as templateFile:
+		for line in templateFile.readlines():
+			g = re.search(r'{{(\w+)}}',line)
+			if g:
+				start = line[0:g.start()]
+				end = line[g.end():]
+				var = g.group(1)
+				geoFile += (start + str(paraDict[var]) + end)
+			else:
+				geoFile += line
+
+	# Substitute value into yaml template 
+	yamlFile = ''
+	with open(yamlFileTemplate,'r') as templateFile:
+		for line in templateFile.readlines():
+			g = re.search(r'{{(\w+)}}',line)
+			if g:
+				start = line[0:g.start()]
+				end = line[g.end():]
+				var = g.group(1)
+				yamlFile += (start + str(paraDict[var]) + end)
+			else:
+				yamlFile += line
+
+	# Upload file to agave
+	location = user.username + '/input'
+	archiveSystem = job['archiveSystem']
+	agaveRequestUploadFile(user,geoFile, geoFileName, archiveSystem,location)
+	agaveRequestUploadFile(user,yamlFile,yamlFileName,archiveSystem,location)
+
+	job['inputs']['geoFile'] = 'agave://' + archiveSystem + '/' + location + '/' + geoFileName
+	job['inputs']['yamlFile'] = 'agave://' + archiveSystem + '/' + location + '/' + yamlFileName
+	# job['inputs'] = inputs
+
+	# Submit the job
+	response = {'fault': True}
+	attempts = 1
+	while ('fault' in response) and (attempts <= 3):
+		response = agaveRequestSubmitJob(user,json.dumps(job))
+		attempts += 1
+	return response
 
 def latinSquare(n,k):
 	# Create a latin square

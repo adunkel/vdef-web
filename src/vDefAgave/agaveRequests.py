@@ -307,7 +307,6 @@ def agaveRequestSubmitJob(user,data):
 									 verify=True)
 			print(response)
 			response = response.json()
-			print(response)
 			if response['status'] == 'success':
 				jobId = response['result']['id']
 				myConsole(user, 'Successfully submitted job ' + jobId + ' to Agave.')
@@ -481,5 +480,5 @@ def waitForIt(eventid,key):
 
 def myConsole(user,string):
 	now = timezone.now()
-	pre = '[' + now.strftime("%Y/%m/%d %H:%M:%S") + ' ' + user.username + ']'
+	pre = '[' + now.strftime("%Y/%m/%d %H:%M:%S") + ' ' + user.username + '] '
 	print(pre,string)
