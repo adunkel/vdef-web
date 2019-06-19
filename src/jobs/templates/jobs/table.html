@@ -31,7 +31,9 @@
 				<tbody>
 				{% endif %}
 				<tr>
-					<td>{{ job.jobid }}</td>
+					<td class="myTooltip">{{ job.jobid }}
+						<img src="{{ job.picture.url }}">
+					</td>
 					<td>{{ job.para1value }}</td>
 					<td>{{ job.para2value }}</td>
 					<td>{{ job.status }}</td>

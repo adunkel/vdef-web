@@ -75,3 +75,23 @@ a.article-title:hover {
   margin-top: 10px;
   border-top: 1px solid #e3e3e3;
 }
+
+.myTooltip {
+  position:relative;
+}
+
+.myTooltip img {
+  max-height: 300px; 
+  width: auto;
+  opacity: 0.0;
+
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+  top: -150px;
+  left: 80%; 
+}
+
+.myTooltip:hover img {
+  opacity: 1.0;
+}

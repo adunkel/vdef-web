@@ -32,17 +32,15 @@ def dataView(request):
 def tableView(request,jobName):
 	user = request.user
 	updateJobDB(request,Q={"value.jobName":jobName})
-	jobsAsDict = []
 	jobs = user.job_set.filter(name=jobName)
 	if jobs:
 		for job in jobs:
-			jobsAsDict.append(job.__dict__)
 			getPicture(request,job.jobid)
+	jobs = user.job_set.filter(name=jobName)
 
-	# user.job_set.values_list('jobid', flat=True).distinct()
 	context = {
 		'jobName': jobName,
-		'jobs': jobsAsDict
+		'jobs': jobs
 	}
 	return render(request, 'jobs/table.html', context)
 
