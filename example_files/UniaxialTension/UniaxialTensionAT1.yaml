@@ -1,0 +1,53 @@
+verbose: 1
+boundaryDisplacement_scaling: linear
+defmech:
+    irrevthres: 0.
+    timestepping: 
+        type: quasistatic
+    solver:
+        type: altmin
+    damage:
+        atol: 1.0e-3
+    sor:
+        omega: 1.4
+    pclag: 5
+disp:
+    snes:
+        type: ksponly
+    pc:
+        type: ml
+heatxfer:
+    timestepping: 
+        type: null
+temperature:
+    offset: 0
+time:
+    min: 0
+    max: 10
+    numstep: 21
+cs0001:
+    hookesLaw:  
+        type: isotropic
+        YoungsModulus: 1.
+        PoissonRatio:  0.
+        PlaneStress: 0
+    FractureToughness: 1.
+    internallength: {{ell}}
+    residualstiffness: 0.
+    damage:
+        type: AT1
+    plasticity:
+        type: NONE
+    displacementbc: no,no,no
+    damageBC: no
+cs0020:
+    displacementbc: yes,yes,no
+    boundaryDisplacement: -.5,0,0
+    damageBC: yes
+    boundaryDamage: 0.
+cs0030:
+    displacementbc: yes,yes,no
+    boundaryDisplacement: .5,0,0
+    damageBC: yes
+    boundaryDamage: 0.
+
