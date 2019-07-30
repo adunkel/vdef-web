@@ -400,7 +400,7 @@ def submit(request):
 			job = {
 				'name':name,
 				'appId': appId,
-				'executionSystem': executionSystem,
+				# 'executionSystem': executionSystem,
 				'batchQueue': queue,
 				'maxRunTime': maxRunTime,
 				'nodeCount': nodeCount,
