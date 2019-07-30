@@ -17,25 +17,34 @@ $ docker-compose up
 You can now access the web-application at http://localhost:8000/ and log in with you TACC credentials.
 
 ## How to add systems and applications to Agave
-Here we describe briefly how to add systems and applications to Agave. For more details see the [Agave documentation](http://developer.agaveapi.co).
+Here we describe briefly how to add systems and applications to Agave. For more details see the [Agave documentation](http://developer.agaveapi.co) or https://tacc-cloud.readthedocs.io/projects/agave/en/latest/.
 
 ### Install the command line utility
+We are using the TACC/agave-cli. You will need to following dependencies.
+* Bash 3.2.50+
+* curl 7.2+ with TLS support
+* jq 1.5+
+* Python 3+
+* TACC/agavepy
+
+Install TACC/agavepy
 ```sh
-$ git clone https://bitbucket.org/agaveapi/cli.git
-$ export PATH=$PATH:your/path/cli/bin
+$ git clone https://github.com/TACC/agavepy
+$ cd agavepy
+$ make install
+```
+
+With the dependencies installed, clone the repository and add it to your `$PATH`.
+```sh
+$ git clone https://github.com/TACC-Cloud/agave-cli
+$ export PATH=$PATH:your/path/agave-cli/bin
 ```
 
 ### Authenticate with Agave
-Ensure you have jq installed:
-For mac users:
-```sh
-$ brew install jq
-```
-Set environment variables
-```sh
-$ export AGAVE_TENANTS_API_BASEURL=https://api.tacc.utexas.edu/tenants
-$ export AGAVE_JSON_PARSER=jq
-```
+There seems to be a new way of authenticating with TACC Agave tenant. See https://github.com/TACC-Cloud/agave-cli for details.
+
+Below are the old instructions that might work.
+
 Initialize the tenant, create a client, and create an access token.
 ```sh
 $ tenants-init -t tacc.prod
