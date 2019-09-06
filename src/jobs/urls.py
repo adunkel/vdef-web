@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 urlpatterns = [
 	path('jobsetup/', views.setup, name='jobs-setup'),
 	path('jobsubmit/', views.submit, name='jobs-submit'),
-	path('data/output/<str:jobId>/', views.output, name='jobs-output'),
+	path('data/output/<str:jobId>/', views.outputList, name='jobs-output'),
 	path('data/output/<str:jobId>/<str:fileName>/', views.getFile, name='jobs-getFile'),
 	path('sets/', views.jobSets, name='jobs-job-sets'),
 	path('chart/<str:jobName>/', views.chart, name='jobs-chart'),

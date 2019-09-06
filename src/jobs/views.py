@@ -125,23 +125,19 @@ def getData(request,jobName):
 
 @login_required
 def getFile(request,jobId,fileName):
+	"""Gets an output file of a job
+	"""
 	user = request.user
-	jobResponse = agaveRequestJobSearch(user,jobId=jobId)
-	path = jobResponse['result'][0]['_links']['archiveData']['href']
-	fileResponse = agaveRequestGetFile(user,path,fileName)
-
+	fileResponse = agaveRequestOutputGet(user,jobId,fileName)
 	content_type = fileResponse.headers['Content-Type']
 	extension = os.path.splitext(fileName)[1]
 	if extension not in ['png','txt']:
 		content_type = 'text/plain'
-	content_disposition = fileResponse.headers['Content-Disposition']
 	response = HttpResponse(fileResponse.content, content_type=content_type)
-	response['Content-Disposition'] = content_disposition
-	# response['Content-Disposition'] = 'attachment; filename=%s' %fileName
 	return response
 
 @login_required
-def output(request,jobId):
+def outputList(request,jobId):
 	user = request.user
 	response = agaveRequestJobsOutputList(user,jobId)
 	files = []
@@ -151,7 +147,6 @@ def output(request,jobId):
 		'files': files,
 		'jobId': jobId,
 	}
-	# return render(request, 'jobs/joboutput.html', context)
 	return JsonResponse(data)
 
 @login_required
@@ -161,10 +156,8 @@ def getPicture(request,jobId):
 	user = request.user
 	job = user.job_set.filter(jobid=jobId).first()
 	if job.picture == 'job_pictures/default.jpg' and job.status == 'FINISHED':
-		jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
 		imageName = job.jobid + '.png'
-		path = jobResponse['result'][0]['_links']['archiveData']['href']
-		imageResponse = agaveRequestGetFile(user,path,imageName)
+		imageResponse = agaveRequestOutputGet(user,jobId,imageName)
 		with open(mediaPath + mediaFolder + imageName, 'wb') as f:
 			f.write(imageResponse.content)
 		job.picture = mediaFolder + imageName

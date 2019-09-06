@@ -216,23 +216,14 @@ def agaveRequestUploadFile(user,data,fileName,system,location):
 			logger.exception('ERROR - trying again')
 	return response
 
-def agaveRequestGetFile(user,path,fileName):
-	user = checkAuth(user)
-	token = user.profile.accesstoken
-
-	headers = {'Authorization': 'Bearer ' + token}
-	path = re.sub('listings','media',path)
-
-	link = path + '/' + fileName
-	logger.info('Getting file ' + link)
-	response = None
-	while response is None:
-		try:
-			response = requests.get(link, 
-									headers=headers, 
-									verify=True)
-		except:
-			logger.exception(response)
+def agaveRequestOutputGet(user,jobId,fileName):
+	"""Gets the output file of some job
+	Agave CLI: jobs-output-get
+	"""
+	token,headers,params = agaveRequestCommon(user)
+	urlExt = 'jobs/v2/' + jobId + '/outputs/media/' + fileName
+	logger.info('Getting file ' + urlExt)
+	response = agaveRequestGet(urlExt=urlExt, headers=headers, params=params)
 	return response
 
 def agaveRequestJobSearch(user,jobName='',jobId=''):
