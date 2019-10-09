@@ -9,7 +9,8 @@ from django import forms
 from vDefAgave.agaveRequests import *
 from .forms import JobSubmitForm, JobSearchForm, JobSetupForm
 from .models import Job
-import json, requests, os, re, time, itertools, mimetypes, random
+import json, requests, os, re, time, itertools, mimetypes, random, ast
+import operator as op
 from multiprocessing import Pool, cpu_count
 import numpy as np
 
@@ -517,12 +518,30 @@ def submitJob(paraDict,user,agaveParameters,geoFileTemplate,yamlFileTemplate,job
 	yamlFile = ''
 	with open(yamlFileTemplate,'r') as templateFile:
 		for line in templateFile.readlines():
-			g = re.search(r'{{(\w+)}}',line)
+			# parse from dictionary
+			g = [x for x in re.finditer(r'{{(\w+)}}',line)]
 			if g:
-				start = line[0:g.start()]
-				end = line[g.end():]
-				var = g.group(1)
-				yamlFile += (start + str(paraDict[var]) + end)
+				for i in range(len(g)):
+					if i == 0:
+						newline = line[0:g[0].start()]
+					else:
+						var = g[i-1].group(1)
+						newline += (str(paraDict[var]) + line[g[i-1].end():g[i].start()])
+				var = g[i].group(1)
+				newline += (str(paraDict[var]) + line[g[i].end():])
+
+				# evaluate expression
+				# expressions can only contain 0-9, +, -, /, *, (, )
+				e = re.search(r'\[\[([0-9+-/*()]+)\]\]',newline)
+				if e:
+					try:
+						start = newline[0:e.start()]
+						end = newline[e.end():]
+						ex = evaluateExpression(e.group(1))
+						newline = (start + str(ex) + end)
+					except:
+						pass
+				yamlFile += newline
 			else:
 				yamlFile += line
 
@@ -543,6 +562,40 @@ def submitJob(paraDict,user,agaveParameters,geoFileTemplate,yamlFileTemplate,job
 		response = agaveRequestSubmitJob(user,json.dumps(job))
 		attempts += 1
 	return response
+
+def myPow(a, b):
+	"""
+	Custom pow function to prevent
+	CPU and memory issues
+	"""
+	if abs(a)>50 or abs(b)>50:
+		raise ValueError((a,b))
+	return op.pow(a, b)
+
+def evaluateExpression(expr):
+	"""
+	Evaluate an expression such as
+	'(1+3)/2'
+	'20 + -2*(2*4) / (2**4)'
+	"""
+	operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
+				 ast.Div: op.truediv, ast.USub: op.neg, ast.Pow: myPow}
+	node = ast.parse(expr.strip(), mode='eval')
+	return evaluate(node.body,operators)
+
+def evaluate(node,operators):
+	"""
+	Evaluates node recursively
+	using only allowed operators
+	"""
+	if isinstance(node, ast.Num):
+		return node.n
+	elif isinstance(node, ast.BinOp):
+		return operators[type(node.op)](evaluate(node.left,operators), evaluate(node.right,operators))
+	elif isinstance(node, ast.UnaryOp):
+		return operators[type(node.op)](evaluate(node.operand,operators))
+	else:
+		raise TypeError(node)
 
 def latinSquare(n,k):
 	# Create a latin square
