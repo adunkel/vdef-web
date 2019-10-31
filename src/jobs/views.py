@@ -176,6 +176,7 @@ def updateJobDB(request,Q={}):
 	for metadata in response['result']:
 		value = metadata['value']
 		if 'jobName' in value and 'parameters' in value:
+			if len(value['parameters']) != 2: continue
 			jobName = value['jobName']
 			para1name = value['parameters'][0]
 			para2name = value['parameters'][1]
