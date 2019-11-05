@@ -503,7 +503,7 @@ def submitJob(paraDict,user,agaveParameters,geoFileTemplate,yamlFileTemplate,job
 	yamlFileName = templateSplit[0] + '_' + '_'.join(str(key) + '-' + str(value) for key,value in paraDict.items()) + '.' + templateSplit[1]
 
 	# Substitute value into geo template 
-	geoFile = '' #'//' + str(paraDict) + '\n'
+	geoFile = '//' + str(paraDict) + '\n'
 	with open(geoFileTemplate,'r') as templateFile:
 		for line in templateFile.readlines():
 			g = re.search(r'{{(\w+)}}',line)
