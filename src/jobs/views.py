@@ -176,50 +176,51 @@ def updateJobDB(request,Q={}):
 	for metadata in response['result']:
 		value = metadata['value']
 		if 'jobName' in value and 'parameters' in value:
-			if len(value['parameters']) != 2: continue
-			jobName = value['jobName']
-			para1name = value['parameters'][0]
-			para2name = value['parameters'][1]
-			jobsInDB = Job.objects.filter(name=jobName)
+			logger.info('SetName: ' + value['jobName'] + ', Parameters: [' + ', '.join(value['parameters']) + '], Length: ' + str(len(value['parameters'])))
+			if len(value['parameters']) == 2: 
+				jobName = value['jobName']
+				para1name = value['parameters'][0]
+				para2name = value['parameters'][1]
+				jobsInDB = Job.objects.filter(name=jobName)
 
-			# Update status if not 'FINISHED'
-			for job in jobsInDB:
-				if job.status not in ['FINISHED']:
-					jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
+				# Update status if not 'FINISHED'
+				for job in jobsInDB:
+					if job.status not in ['FINISHED']:
+						jobResponse = agaveRequestJobSearch(user,jobId=job.jobid)
+						status = jobResponse['result'][0]['status']
+						color = 'red'
+						if status == 'FINISHED':
+							color = 'blue'
+						elif status not in ['FINISHED','FAILED','STOPPED']: # Running
+							color = 'orange'
+						# else failed or stopped (color = 'red')
+						job.status = status
+						job.color = color
+						job.save()
+
+				# Create new job entries
+				jobsInDB = [job.jobid for job in Job.objects.filter(name=jobName)]
+				jobsNotInDB = (set(jobsInDB) ^ set(metadata['associationIds'])) & set(metadata['associationIds'])
+				for jobId in jobsNotInDB:
+					jobResponse = agaveRequestJobSearch(user,jobId=jobId)
 					status = jobResponse['result'][0]['status']
 					color = 'red'
 					if status == 'FINISHED':
 						color = 'blue'
-					elif status not in ['FINISHED','FAILED','STOPPED']: # Running
+					elif status == 'RUNNING':
 						color = 'orange'
-					# else failed or stopped (color = 'red')
-					job.status = status
-					job.color = color
-					job.save()
-
-			# Create new job entries
-			jobsInDB = [job.jobid for job in Job.objects.filter(name=jobName)]
-			jobsNotInDB = (set(jobsInDB) ^ set(metadata['associationIds'])) & set(metadata['associationIds'])
-			for jobId in jobsNotInDB:
-				jobResponse = agaveRequestJobSearch(user,jobId=jobId)
-				status = jobResponse['result'][0]['status']
-				color = 'red'
-				if status == 'FINISHED':
-					color = 'blue'
-				elif status == 'RUNNING':
-					color = 'orange'
-				para1value = value['paraValues'][jobId][para1name]
-				para2value = value['paraValues'][jobId][para2name]
-				Job(name=jobName,
-					jobid=jobId,
-					user=user,
-					value=8,
-					para1name=para1name,
-					para1value=para1value,
-					para2name=para2name,
-					para2value=para2value,
-					status=status,
-					color=color).save()
+					para1value = value['paraValues'][jobId][para1name]
+					para2value = value['paraValues'][jobId][para2name]
+					Job(name=jobName,
+						jobid=jobId,
+						user=user,
+						value=8,
+						para1name=para1name,
+						para1value=para1value,
+						para2name=para2name,
+						para2value=para2value,
+						status=status,
+						color=color).save()
 
 @login_required
 def jobSets(request):
@@ -354,6 +355,9 @@ def submit(request):
 			if g:
 				fileParameters.append(g.group(1))
 	fileParameters = list(set(fileParameters))
+	if len(fileParameters) != 2:
+		messages.warning(request, 'Two parameters are required. %d were found in the GEO and YAML file.' % (len(fileParameters)))
+		return redirect('jobs-job-sets')
 
 	# Get agave parameters
 	response = agaveRequestAppDetails(user,appId)
